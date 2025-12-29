@@ -1,14 +1,18 @@
 const express = require("express");
 const router = express.Router();
 
-// IMPORT MIDDLEWARES
 const auth = require("../middlewares/authMiddleware");
 const role = require("../middlewares/roleMiddleware");
 
-//IMPORT CONTROLLER
-const { createTable } = require("../controllers/tableControllers");
+const {
+    createPayment
+} = require("../controllers/paymentController");
 
-// CREATE TABLE (ADMIN ONLY)
-router.post("/",auth, role("admin"), createTable)
+router.post(
+    "/",
+    auth,
+    role("cashier", "admin"),
+    createPayment
+);
 
 module.exports = router;

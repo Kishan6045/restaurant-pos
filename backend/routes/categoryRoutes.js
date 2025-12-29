@@ -4,10 +4,26 @@ const router = express.Router();
 const auth = require("../middlewares/authMiddleware");
 const role = require("../middlewares/roleMiddleware");
 
-const { createCategory } = require("../controllers/categoryController");
+const { createCategory,
+        getCategories,
+        updateCategory,
+        deleteCategory
 
-// CREATE CATEGORY (ADMIN ONLY)
+ } = require("../controllers/categoryController");
+
+
+ // GET ALL CATEGORIES
+router.get("/", auth, role("admin"), getCategories);
+
+// CREATE CATEGORY
 router.post("/", auth, role("admin"), createCategory);
+
+// UPDATE CATEGORY
+router.put("/:id", auth, role("admin"), updateCategory);
+
+// DELETE CATEGORY
+router.delete("/:id", auth, role("admin"), deleteCategory);
+
 
 
 

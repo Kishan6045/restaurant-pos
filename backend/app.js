@@ -20,6 +20,10 @@ app.use("/api/kitchen", require("./routes/kitchenRoutes"));
 app.use("/api/categories", require("./routes/categoryRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/tables", require("./routes/tableRoutes"));
+app.use("/api/orders", require("./routes/orderRoutes"));
+app.use("/api/payments", require("./routes/paymentRoutes"));
+app.use("/api/reports", require("./routes/reportRoutes"));
+
 
 
 // local page
