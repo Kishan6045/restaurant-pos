@@ -6,6 +6,7 @@ const role = require("../middlewares/roleMiddleware");
 
 const { createCategory,
         getCategories,
+        getCategoryProducts,
         updateCategory,
         deleteCategory
 
@@ -14,6 +15,13 @@ const { createCategory,
 
  // GET ALL CATEGORIES
 router.get("/", auth, role("admin"), getCategories);
+// VIEW PRODUCTS UNDER CATEGORY
+router.get(
+  "/:id/products",
+  auth,
+  role("admin", "cashier", "kitchen"),
+  getCategoryProducts
+);
 
 // CREATE CATEGORY
 router.post("/", auth, role("admin"), createCategory);

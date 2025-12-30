@@ -1,196 +1,361 @@
 import { useEffect, useState } from "react";
-import axios from "../../utils/axios";
-import { Plus, Trash2, Pencil, Loader2, X } from "lucide-react";
+import api from "../../utils/axios";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Loader2,
+  X,
+  Eye,
+  MoreVertical
+} from "lucide-react";
 import { toast } from "react-toastify";
 
+const CUISINES = ["Gujarati", "Punjabi", "Chinese", "Common"];
+
 const Categories = () => {
-    const [categories, setCategories] = useState([]);
-    const [name, setName] = useState("");
-    const [editName, setEditName] = useState("");
-    const [editingId, setEditingId] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [openModal, setOpenModal] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-    // ================= FETCH =================
-    const fetchCategories = async () => {
-        try {
-            setLoading(true);
-            const res = await axios.get("/api/categories");
-            setCategories(res.data.categories || []);
-        } catch (err) {
-            toast.error(err.response?.data?.message || "Failed to load");
-        } finally {
-            setLoading(false);
-        }
-    };
+  // add
+  const [name, setName] = useState("");
+  const [cuisine, setCuisine] = useState("");
 
-    useEffect(() => {
-        fetchCategories();
-    }, []);
+  // filter
+  const [activeCuisine, setActiveCuisine] = useState("");
 
-    // ================= ADD =================
-    const addCategory = async () => {
-        if (!name.trim()) return toast.error("Category name required");
-        try {
-            const res = await axios.post("/api/categories", { name });
-            toast.success(res.data.message);
-            setName("");
-            fetchCategories();
-        } catch (err) {
-            toast.error(err.response?.data?.message);
-        }
-    };
+  const [openMenuId, setOpenMenuId] = useState(null);
 
-    // ================= UPDATE =================
-    const updateCategory = async () => {
-        if (!editName.trim()) return toast.error("Category name required");
-        try {
-            const res = await axios.put(`/api/categories/${editingId}`, {
-                name: editName
-            });
-            toast.success(res.data.message);
-            setOpenModal(false);
-            setEditingId(null);
-            fetchCategories();
-        } catch (err) {
-            toast.error(err.response?.data?.message);
-        }
-    };
+  // edit
+  const [editOpen, setEditOpen] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editCuisine, setEditCuisine] = useState("");
 
-    // ================= DELETE =================
-    const deleteCategory = async (id) => {
-        if (!window.confirm("Delete this category?")) return;
-        try {
-            const res = await axios.delete(`/api/categories/${id}`);
-            toast.success(res.data.message);
-            fetchCategories();
-        } catch (err) {
-            toast.error(err.response?.data?.message);
-        }
-    };
+  // view
+  const [viewOpen, setViewOpen] = useState(false);
+  const [viewCategory, setViewCategory] = useState(null);
+  const [viewProducts, setViewProducts] = useState([]);
+  const [viewLoading, setViewLoading] = useState(false);
 
-    return (
-        <div className="max-w-4xl mx-auto h-[calc(100vh-80px)] flex flex-col">
+  /* ================= FETCH ================= */
+  const loadCategories = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/api/categories");
+      setCategories(res.data.categories || []);
+    } catch {
+      toast.error("Failed to load categories");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            {/* ===== HEADER (FIXED) ===== */}
-            <h1 className="text-2xl font-semibold mb-4 shrink-0">
-                Category Management
-            </h1>
+  useEffect(() => {
+    loadCategories();
+  }, []);
 
-            {/* ===== ADD CATEGORY (FIXED) ===== */}
-            <div className="bg-white p-4 rounded-xl shadow mb-4 shrink-0">
-                <div className="flex gap-3">
-                    <input
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Category name"
-                        className="flex-1 border px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <button
-                        onClick={addCategory}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-5 rounded-lg flex items-center gap-2"
-                    >
-                        <Plus size={16} />
-                        Add
-                    </button>
-                </div>
-            </div>
+  /* ================= ADD ================= */
+  const addCategory = async () => {
+    if (!name.trim()) return toast.error("Category name required");
+    if (!cuisine) return toast.error("Please select cuisine");
 
-            {/* ===== CATEGORY LIST (ONLY THIS SCROLLS) ===== */}
-            <div className="bg-white rounded-xl shadow flex-1 overflow-y-auto">
+    await api.post("/api/categories", { name, cuisine });
+    toast.success("Category added");
 
-                {/* Sticky list header */}
-                <div className="sticky top-0 bg-white z-10 px-5 py-3 font-semibold border-b">
-                    All Categories
-                </div>
+    setName("");
+    setCuisine("");
+    loadCategories();
+  };
 
-                {loading && (
-                    <div className="p-6 flex justify-center">
-                        <Loader2 className="animate-spin" />
-                    </div>
-                )}
+  /* ================= UPDATE ================= */
+  const updateCategory = async () => {
+    if (!editName.trim()) return toast.error("Name required");
+    if (!editCuisine) return toast.error("Cuisine required");
 
-                {!loading && categories.length === 0 && (
-                    <p className="p-6 text-center text-gray-500">
-                        No categories found
-                    </p>
-                )}
+    await api.put(`/api/categories/${editId}`, {
+      name: editName,
+      cuisine: editCuisine
+    });
+    toast.success("Category updated");
+    setEditOpen(false);
+    loadCategories();
+  };
 
-                {!loading &&
-                    categories.map((cat) => (
-                        <div
-                            key={cat._id}
-                            className="flex justify-between items-center px-5 py-4 border-b last:border-b-0 hover:bg-gray-50"
-                        >
-                            <span className="font-medium">{cat.name}</span>
+  /* ================= DELETE ================= */
+  const deleteCategory = async (id) => {
+    if (!confirm("Delete this category?")) return;
+    await api.delete(`/api/categories/${id}`);
+    toast.success("Category deleted");
+    loadCategories();
+  };
 
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => {
-                                        setEditingId(cat._id);
-                                        setEditName(cat.name);
-                                        setOpenModal(true);
-                                    }}
-                                    className="text-blue-600 hover:text-blue-800"
-                                >
-                                    <Pencil size={16} />
-                                </button>
+  /* ================= VIEW ================= */
+  const openView = async (cat) => {
+    setViewCategory(cat);
+    setViewOpen(true);
+    setViewLoading(true);
+    setOpenMenuId(null);
 
-                                <button
-                                    onClick={() => deleteCategory(cat._id)}
-                                    className="text-red-600 hover:text-red-800"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-            </div>
+    try {
+      const res = await api.get(`/api/categories/${cat._id}/products`);
+      setViewProducts(res.data.products || []);
+    } catch {
+      toast.error("Failed to load products");
+    } finally {
+      setViewLoading(false);
+    }
+  };
 
-            {/* ===== EDIT MODAL ===== */}
-            {openModal && (
-                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-                    <div className="bg-white w-[90%] max-w-md rounded-xl shadow-lg p-6 relative">
+  /* ================= FILTER ================= */
+  const filtered = activeCuisine
+    ? categories.filter(c => c.cuisine === activeCuisine)
+    : categories;
 
-                        <button
-                            onClick={() => setOpenModal(false)}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-black"
-                        >
-                            <X />
-                        </button>
+  return (
+    <div
+      className="p-6 h-screen overflow-hidden bg-gray-100"
+      onClick={() => setOpenMenuId(null)}
+    >
+      {/* HEADER */}
+      <div className="mb-4">
+        <h1 className="text-xl font-semibold text-gray-900">
+          Menu Categories
+        </h1>
+        <p className="text-sm text-gray-500">
+          Restaurant Menu Management
+        </p>
+      </div>
 
-                        <h2 className="text-lg font-semibold mb-4">
-                            Edit Category
-                        </h2>
+      {/* ADD CATEGORY */}
+      <div className="mb-6 bg-white border rounded-xl px-4 py-3 shadow-sm">
+        <div className="flex flex-col sm:flex-row gap-3 items-center">
+          <input
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="Category name (e.g. Starters)"
+            className="flex-1 border rounded-lg px-4 py-2 text-sm outline-none"
+          />
 
-                        <input
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            className="w-full border px-4 py-2 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Category name"
-                        />
+          <select
+            value={cuisine}
+            onChange={e => setCuisine(e.target.value)}
+            className="border rounded-lg px-3 py-2 text-sm"
+          >
+            <option value="" disabled>
+              Select Cuisine
+            </option>
+            {CUISINES.map(c => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
 
-                        <div className="flex justify-end gap-3">
-                            <button
-                                onClick={() => setOpenModal(false)}
-                                className="px-4 py-2 rounded-lg border"
-                            >
-                                Cancel
-                            </button>
-
-                            <button
-                                onClick={updateCategory}
-                                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
-                            >
-                                Update
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-            )}
+          <button
+            onClick={addCategory}
+            className="bg-gray-900 text-white px-5 py-2 rounded-lg text-sm flex items-center gap-2"
+          >
+            <Plus size={14} /> Add
+          </button>
         </div>
-    );
+      </div>
+
+      {/* FILTER */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        <button
+          onClick={() => setActiveCuisine("")}
+          className={`px-4 py-1.5 rounded-full text-sm border
+            ${activeCuisine === ""
+              ? "bg-gray-900 text-white"
+              : "bg-white text-gray-700"}`}
+        >
+          All
+        </button>
+
+        {CUISINES.map(c => (
+          <button
+            key={c}
+            onClick={() => setActiveCuisine(c)}
+            className={`px-4 py-1.5 rounded-full text-sm border
+              ${activeCuisine === c
+                ? "bg-gray-900 text-white"
+                : "bg-white text-gray-700"}`}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+
+      {/* GRID (ONLY THIS SCROLLS) */}
+      <div className="bg-white rounded-xl border shadow-sm p-4 h-[65vh] overflow-y-auto">
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="animate-spin" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {filtered.map(cat => (
+              <div
+                key={cat._id}
+                className="relative bg-white rounded-xl border p-6 h-[140px]
+                           hover:shadow-lg transition"
+                onClick={e => e.stopPropagation()}
+              >
+                {/* LEFT COLOR STRIP */}
+                <div className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-gray-900" />
+
+                {/* MENU */}
+                <button
+                  onClick={() =>
+                    setOpenMenuId(
+                      openMenuId === cat._id ? null : cat._id
+                    )
+                  }
+                  className="absolute top-3 right-3 text-gray-500"
+                >
+                  <MoreVertical size={18} />
+                </button>
+
+                {/* NAME */}
+                <p className="text-lg font-semibold truncate">
+                  {cat.name}
+                </p>
+
+                {/* CUISINE CHIP */}
+                <span className="inline-block mt-2 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                  {cat.cuisine}
+                </span>
+
+                {/* ITEM BADGE (UI ONLY) */}
+             <span className="absolute bottom-4 right-4 text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600">
+  {cat.productCount || 0} items
+</span>
+
+                {/* DROPDOWN */}
+                {openMenuId === cat._id && (
+                  <div className="absolute right-3 top-10 bg-white border rounded-lg shadow-lg w-36 z-50">
+                    <button
+                      onClick={() => openView(cat)}
+                      className="w-full px-3 py-2 text-sm flex gap-2 hover:bg-gray-100"
+                    >
+                      <Eye size={14} /> View
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditId(cat._id);
+                        setEditName(cat.name);
+                        setEditCuisine(cat.cuisine);
+                        setEditOpen(true);
+                        setOpenMenuId(null);
+                      }}
+                      className="w-full px-3 py-2 text-sm flex gap-2 hover:bg-gray-100"
+                    >
+                      <Pencil size={14} /> Edit
+                    </button>
+                    <button
+                      onClick={() => deleteCategory(cat._id)}
+                      className="w-full px-3 py-2 text-sm flex gap-2 text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 size={14} /> Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* EDIT MODAL */}
+      {editOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-5 rounded-xl w-[90%] max-w-sm relative">
+            <button
+              onClick={() => setEditOpen(false)}
+              className="absolute top-3 right-3"
+            >
+              <X size={18} />
+            </button>
+
+            <h3 className="font-semibold mb-3">
+              Edit Category
+            </h3>
+
+            <input
+              value={editName}
+              onChange={e => setEditName(e.target.value)}
+              className="border w-full px-3 py-2 rounded-lg mb-3"
+            />
+
+            <select
+              value={editCuisine}
+              onChange={e => setEditCuisine(e.target.value)}
+              className="border w-full px-3 py-2 rounded-lg mb-4"
+            >
+              <option value="" disabled>Select Cuisine</option>
+              {CUISINES.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+
+            <button
+              onClick={updateCategory}
+              className="w-full bg-gray-900 text-white py-2 rounded-lg"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW MODAL */}
+      {viewOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white w-[90%] max-w-md rounded-xl overflow-hidden">
+            <div className="flex justify-between items-center px-4 py-3 border-b">
+              <h3 className="font-semibold text-sm">
+                {viewCategory.name}
+              </h3>
+              <button onClick={() => setViewOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="max-h-[150px] overflow-y-auto divide-y scrollbar-thin">
+              {viewLoading ? (
+                <div className="p-6 text-center">
+                  <Loader2 className="animate-spin mx-auto" />
+                </div>
+              ) : viewProducts.length === 0 ? (
+                <p className="p-6 text-center text-gray-500">
+                  No products found
+                </p>
+              ) : (
+                viewProducts.map(p => (
+                  <div key={p._id} className="flex justify-between px-4 py-3">
+                    <div>
+                      <p className="text-sm font-medium">{p.name}</p>
+                      <p className="text-xs text-gray-500">₹{p.price}</p>
+                    </div>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${
+                        p.isAvailable
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {p.isAvailable ? "Available" : "Out"}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default Categories;
