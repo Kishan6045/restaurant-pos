@@ -228,9 +228,9 @@ const Categories = () => {
                 </span>
 
                 {/* ITEM BADGE (UI ONLY) */}
-             <span className="absolute bottom-4 right-4 text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600">
-  {cat.productCount || 0} items
-</span>
+                <span className="absolute bottom-4 right-4 text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600">
+                  {cat.productCount || 0} items
+                </span>
 
                 {/* DROPDOWN */}
                 {openMenuId === cat._id && (
@@ -339,11 +339,10 @@ const Categories = () => {
                       <p className="text-xs text-gray-500">₹{p.price}</p>
                     </div>
                     <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        p.isAvailable
+                      className={`text-xs px-2 py-1 rounded-full ${p.isAvailable
                           ? "bg-green-100 text-green-700"
                           : "bg-red-100 text-red-700"
-                      }`}
+                        }`}
                     >
                       {p.isAvailable ? "Available" : "Out"}
                     </span>
