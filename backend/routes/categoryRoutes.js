@@ -14,7 +14,8 @@ const { createCategory,
 
 
  // GET ALL CATEGORIES
-router.get("/", auth, role("admin"), getCategories);
+router.get("/", auth, role("admin", "cashier", "kitchen"), getCategories);
+
 // VIEW PRODUCTS UNDER CATEGORY
 router.get(
   "/:id/products",

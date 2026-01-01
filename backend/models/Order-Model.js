@@ -19,27 +19,35 @@ const orderSchema = new mongoose.Schema({
             quantity: {
                 type: Number,
                 default: 1
+            },
+            //kitchenStatus
+            status:{
+                type: String,
+                enum: ["pending", "preparing", "ready","served"],
+                default: "pending"
             }
         }
     ],
 
-    status: {
+    // overall order status
+    orderStatus: {
         type: String,
-        enum: ["pending", "preparing", "ready", "served"],
-        default: "pending"
+        enum: ["open", "billed", "closed"],
+        default: "open"
     },
 
-    totalAmount: {
+    totalAmount:{
         type: Number,
         required: true
     },
-
+    // billing  and payment details
     paymentStatus: {
         type: String,
         enum: ["unpaid", "paid"],
         default: "unpaid"
     },
-     paymentMethod: {                
+
+    paymentMethod: {                
     type: String,
     enum: ["cash", "upi", "card"]
   }

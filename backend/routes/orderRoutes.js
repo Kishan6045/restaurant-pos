@@ -23,7 +23,7 @@ router.post(
 
 // Kitchen updates status
 router.patch(
-    "/:id",
+    "/:orderId/items/:itemId",
     auth,
     role("kitchen", "admin"),
     updateOrderStatus

@@ -12,6 +12,10 @@ import Staff from "./pages/admin/Staff";
 import Orders from "./pages/admin/orders";
 import Reports from "./pages/admin/Reports";
 import Settings from "./pages/admin/Settings";
+import CashierLayout from "./layouts/CashierLayout";
+import CashierTables from "./pages/cashier/CashierTables";
+import OrderScreen from "./pages/cashier/OrderScreen";
+import KitchenScreen from "./pages/kitchen/KitchenScreen";
 
 function App() {
   return (
@@ -21,8 +25,7 @@ function App() {
       <Routes>
         {/* default */}
         <Route path="/" element={<Navigate to="/login" />} />
-
-        <Route path="/login" element={<Login />} />
+         <Route path="/login" element={<Login />} />
 
         {/* Admin layout */}
         <Route path="/admin" element={<AdminLayout />}>
@@ -34,18 +37,22 @@ function App() {
           <Route path="orders" element={<Orders/>}/>
           <Route path="reports" element={<Reports/>}/>
           <Route path="settings" element={<Settings/>}/>
-
         </Route>
         
-        
+        {/* Cashier layout */}
+        <Route path="/cashier" element={<CashierLayout />} >
+          <Route index element={<Navigate to="tables" />} />
+         <Route path="tables" element={<CashierTables />} />
+          <Route path="table/:tableId" element={<OrderScreen />} />
+        </Route>
       
 
+        {/* Kitchen layout */}
+        <Route path="/kitchen" element={<KitchenScreen />} />
 
 
 
-        {/* <Route path="/cashier" element={<Cashier />} /> */}
-        {/* <Route path="/kitchen" element={<Kitchen />} /> */}
-      </Routes>
+        </Routes>
     </BrowserRouter>
   );
 }
