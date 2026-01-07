@@ -40,10 +40,9 @@ const CashierTables = () => {
             key={f}
             onClick={() => setFloor(f)}
             className={`px-4 py-2 rounded-full text-sm border
-              ${
-                floor === f
-                  ? "bg-black text-white"
-                  : "bg-white hover:bg-gray-100"
+              ${floor === f
+                ? "bg-black text-white"
+                : "bg-white hover:bg-gray-100"
               }`}
           >
             {f}
@@ -59,10 +58,9 @@ const CashierTables = () => {
             onClick={() => navigate(`/cashier/table/${t._id}`)}
             className={`cursor-pointer rounded-xl p-4 shadow-sm border
               transition hover:shadow-md
-              ${
-                t.status === "available"
-                  ? "bg-green-50 border-green-300"
-                  : "bg-red-50 border-red-300"
+              ${t.status === "available"
+                ? "bg-green-50 border-green-300"
+                : "bg-red-50 border-red-300"
               }`}
           >
             <div className="text-xl font-bold text-center">
@@ -75,10 +73,9 @@ const CashierTables = () => {
 
             <div
               className={`mt-3 text-center text-sm font-medium px-2 py-1 rounded-full
-                ${
-                  t.status === "available"
-                    ? "bg-green-600 text-white"
-                    : "bg-red-600 text-white"
+                ${t.status === "available"
+                  ? "bg-green-600 text-white"
+                  : "bg-red-600 text-white"
                 }`}
             >
               {t.status.toUpperCase()}

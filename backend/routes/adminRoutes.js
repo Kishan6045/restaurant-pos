@@ -2,7 +2,9 @@ const express = require("express");
 const router = express.Router();
 
 const auth = require("../middlewares/authMiddleware");
-const role = require("../middlewares/roleMiddleware");
+// const role = require("../middlewares/roleMiddleware");
+const permit = require("../middlewares/permissionMiddleware");
+
 
 const {
   getDashboard,
@@ -14,7 +16,7 @@ const {
 router.get(
   "/dashboard",
   auth,
-  role("admin"),
+  permit("dashboard.read"),    // role("admin"),
   getDashboard
 );
 
@@ -22,7 +24,7 @@ router.get(
 router.post(
   "/create-user",
   auth,
-  role("admin"),
+  permit("staff.create"),      // role("admin"),
   createUser
 );
 
@@ -30,7 +32,7 @@ router.post(
 router.post(
   "/products",
   auth,
-  role("admin"),
+  permit("products.create"),  // role("admin"),
   createProduct
 );
 

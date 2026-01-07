@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const auth = require("../middlewares/authMiddleware");
-const role = require("../middlewares/roleMiddleware");
+const permit = require("../middlewares/permissionMiddleware");  // const role = require("../middlewares/roleMiddleware");
 
 const {
     createPayment
@@ -11,7 +11,7 @@ const {
 router.post(
     "/",
     auth,
-    role("cashier", "admin"),
+     permit("payments.create"),  // role("cashier", "admin"),
     createPayment
 );
 

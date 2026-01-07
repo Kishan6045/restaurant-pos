@@ -227,49 +227,55 @@ exports.createOrder = async (req, res) => {
 
 //Kitchen updates order status
 exports.updateOrderStatus = async (req, res) => {
-    try {
-        const { status } = req.body;
+  try {
+    const { status } = req.body;
 
-        const allowedStatus = ["pending", "preparing", "ready", "served"];
-        if (!allowedStatus.includes(status)) {
-            return res.status(400).json({ message: "Invaild status" });
-        }
-
-        const order = await Order.findOneAndUpdate(
-            {
-                _id: req.params.orderId,
-                "items._id": req.params.itemId
-            },
-            {
-                $set: { "items.$.status": status }
-            },
-            { new: true }
-        );
-
-        if (!order) {
-            return res.status(404).json({ message: "Order not found" });
-        }
-
-        res.json(order);
-    } catch (error) {
-        res.status(500).json({ message: " Status update failed" });
+    const allowedStatus = ["pending", "preparing", "ready", "served"];
+    if (!allowedStatus.includes(status)) {
+      return res.status(400).json({ message: "Invaild status" });
     }
+
+    const order = await Order.findOneAndUpdate(
+      {
+        _id: req.params.orderId,
+        "items._id": req.params.itemId
+      },
+      {
+        $set: { "items.$.status": status }
+      },
+      { new: true }
+    );
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: " Status update failed" });
+  }
 };
 
 
 // View orders (Kitchen + Cashier + Admin)
 exports.getOrders = async (req, res) => {
-    try {
-        // filter based on role
-        const filter =
-            req.user.role === "kitchen"
-                ? { orderStatus: "open" }
-                : {};
-        const orders = await Order.find(filter)
-            .populate("tableId")    //populate use kare to pura table data aaja ta hai
-            .sort({ createdAt: -1 });
-        res.json(orders);
-    } catch (error) {
-        res.status(500).json({ message: "Failed to fetch orders" });
+  try {
+    let filter = {};
+    // filter based on role
+
+    if (req.user.role === "kitchen") {
+      filter = {
+        orderStatus: "open",
+        "items.status": { $in: ["pending", "preparing"] }
+      };
     }
+
+    const orders = await Order.find(filter)
+      .populate("tableId")    //populate use kare to pura table data aaja ta hai
+      .populate("items.productId")
+      .sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch orders" });
+  }
 };

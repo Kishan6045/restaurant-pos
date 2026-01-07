@@ -3,7 +3,7 @@ const router = express.Router();
 
 // IMPORT MIDDLEWARES
 const auth = require("../middlewares/authMiddleware");
-const role = require("../middlewares/roleMiddleware");
+const permit = require("../middlewares/permissionMiddleware");   //const role = require("../middlewares/roleMiddleware");
 
 //IMPORT CONTROLLER
 const { createTable,
@@ -14,19 +14,44 @@ const { createTable,
 } = require("../controllers/tableControllers");
 
 // CREATE TABLE (ADMIN ONLY)
-router.post("/", auth, role("admin"), createTable)  
+router.post(
+    "/",
+    auth,
+    permit("tables.create"),   // role("admin"),
+    createTable
+)
 
 // update table (status)  
-router.patch("/:id/status", auth, updateTableStatus);
+router.patch(
+    "/:id/status",
+    auth,
+    permit("tables.update"),
+    updateTableStatus
+);
 
 // update full table details (admin)
-router.put("/:id", auth, role("admin"), updateTable);
+router.put(
+    "/:id",
+    auth,
+    permit("tables.update"),  //   role("admin"),
+    updateTable
+);
 
 // get all tables
-router.get("/", auth, getTables);
+router.get(
+    "/",
+    auth,
+    permit("tables.read"),
+    getTables
+);
 
 // delete table
-router.delete("/:id", auth, role("admin"), deleteTable);
+router.delete(
+    "/:id",
+    auth,
+    permit("tables.delete"),   // role("admin"),
+    deleteTable
+);
 
 
 module.exports = router;

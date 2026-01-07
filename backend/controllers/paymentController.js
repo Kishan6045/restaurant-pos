@@ -24,12 +24,12 @@ exports.createPayment = async (req, res) => {
         //Close order
         order.paymentStatus = "paid";
         order.paymentMethod = method;  // cash | upi | card
-        order.status = "served";
+        order.orderStatus = "closed";
         await order.save();
 
         //table khali thai gyu che new customer aavi jai
         await Table.findByIdAndUpdate(order.tableId, {
-            status: "free"
+            status: "available"
         });
         res.status(201).json({ message: "Payment successful", payment });
     } catch (error) {

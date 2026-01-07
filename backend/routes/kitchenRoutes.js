@@ -1,14 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middlewares/authMiddleware");
-const role = require("../middlewares/roleMiddleware");
-const { getOrders, updateOrderStatus } = require("../controllers/orderController");
+const permit = require("../middlewares/permissionMiddleware");  // const role = require("../middlewares/roleMiddleware");
+const {
+  getOrders,
+  updateOrderStatus
+} = require("../controllers/orderController");
 
 // Kitchen dashboard
 router.get(
   "/orders",
   auth,
-  role("kitchen"),
+  permit("kitchen.view"), //role("kitchen"),
   getOrders
 );
 
@@ -16,7 +19,7 @@ router.get(
 router.patch(
   "/orders/:orderId/items/:itemId",
   auth,
-  role("kitchen"),
+  permit("kitchen.update"),  // role("kitchen"),
   updateOrderStatus
 );
 

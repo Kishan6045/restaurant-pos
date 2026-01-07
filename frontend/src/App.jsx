@@ -9,13 +9,14 @@ import Categories from "./pages/admin/Categories";
 import Products from "./pages/admin/Products";
 import Tables from "./pages/admin/Tables";
 import Staff from "./pages/admin/Staff";
-import Orders from "./pages/admin/orders";
+import LiveOrders from "./pages/admin/LiveOrders";
 import Reports from "./pages/admin/Reports";
-import Settings from "./pages/admin/Settings";
+import Permission from "./pages/admin/Permission";
 import CashierLayout from "./layouts/CashierLayout";
 import CashierTables from "./pages/cashier/CashierTables";
 import OrderScreen from "./pages/cashier/OrderScreen";
 import KitchenScreen from "./pages/kitchen/KitchenScreen";
+import BillingScreen from "./pages/cashier/BillingScreen";
 
 function App() {
   return (
@@ -34,9 +35,9 @@ function App() {
           <Route path="products" element={<Products/>}/>
           <Route path="tables" element={<Tables/>}/>
           <Route path="staff" element={<Staff/>}/>
-          <Route path="orders" element={<Orders/>}/>
+          <Route path="liveorders" element={<LiveOrders/>}/>
           <Route path="reports" element={<Reports/>}/>
-          <Route path="settings" element={<Settings/>}/>
+          <Route path="permissions" element={<Permission/>}/>
         </Route>
         
         {/* Cashier layout */}
@@ -44,6 +45,7 @@ function App() {
           <Route index element={<Navigate to="tables" />} />
          <Route path="tables" element={<CashierTables />} />
           <Route path="table/:tableId" element={<OrderScreen />} />
+          <Route path="billing/:tableId" element={<BillingScreen />} />
         </Route>
       
 

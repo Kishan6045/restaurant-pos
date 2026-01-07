@@ -3,8 +3,9 @@ const router = express.Router();
 
 
 const auth = require("../middlewares/authMiddleware");
-const role = require("../middlewares/roleMiddleware");
+// const role = require("../middlewares/roleMiddleware");
 const upload = require("../config/multer");
+const permit = require("../middlewares/permissionMiddleware");
 
 const { createProduct,
     getProducts,
@@ -17,7 +18,7 @@ const { createProduct,
 router.post(
     "/",
     auth,
-    role("admin"),
+    permit("products.create"), // role("admin"),
     upload.single("image"),
     createProduct
 );
@@ -26,7 +27,7 @@ router.post(
 router.get(
     "/",
     auth,
-    role("admin", "kitchen", "cashier"),
+    permit("products.read"), // role("admin", "kitchen", "cashier"),
     getProducts
 );
 
@@ -35,7 +36,7 @@ router.get(
 router.put(
     "/:id",
     auth,
-    role("admin"),
+    permit("products.update"), // role("admin"),
     upload.single("image"),
     updateProduct
 );
@@ -45,7 +46,7 @@ router.put(
 router.delete(
     "/:id",
     auth,
-    role("admin"),
+    permit("products.delete"), //role("admin"),
     deleteProduct
 );
 

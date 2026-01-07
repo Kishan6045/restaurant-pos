@@ -23,6 +23,8 @@ app.use("/api/tables", require("./routes/tableRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
+app.use("/api/staff", require("./routes/staffRoutes"));
+app.use("/api/permissions", require("./routes/permissionRoutes"));
 
 
 

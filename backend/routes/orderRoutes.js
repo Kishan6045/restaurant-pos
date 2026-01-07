@@ -3,8 +3,7 @@ const router = express.Router();
 
 // IMPORT MIDDLEWARES
 const auth = require("../middlewares/authMiddleware");
-const role = require("../middlewares/roleMiddleware");
-
+const permit = require("../middlewares/permissionMiddleware"); // const role = require("../middlewares/roleMiddleware");
 //IMPORT CONTROLLER
 const { createOrder,
     updateOrderStatus,
@@ -16,7 +15,7 @@ const { createOrder,
 router.post(
     "/",
     auth,
-    role("cashier", "admin"),
+    permit("orders.create"), // role("cashier", "admin"),
     createOrder
 );
 
@@ -25,7 +24,7 @@ router.post(
 router.patch(
     "/:orderId/items/:itemId",
     auth,
-    role("kitchen", "admin"),
+    permit("kitchen.update"),  // role("kitchen", "admin"),
     updateOrderStatus
 );
 
@@ -34,7 +33,7 @@ router.patch(
 router.get(
     "/",
     auth,
-    role("kitchen", "cashier", "admin"),
+    permit("orders.read"),  // role("kitchen", "cashier", "admin"),
     getOrders
 );
 

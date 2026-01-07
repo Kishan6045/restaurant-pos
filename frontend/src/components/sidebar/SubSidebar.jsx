@@ -23,18 +23,17 @@ const menuConfig = {
     },
     orders: {
         title: "Orders",
-        links: [{ to: "/admin/orders", label: "Live Orders" }]
+        links: [{ to: "/admin/liveorders", label: "Live Orders" }]
     },
     reports: {
         title: "Reports",
         links: [
-            { to: "/admin/reports/daily", label: "Daily" },
-            { to: "/admin/reports/monthly", label: "Monthly" }
+           { to: "/admin/reports", label: "Reports" }
         ]
     },
     settings: {
         title: "Settings",
-        links: [{ to: "/admin/settings", label: "General" }]
+        links: [{ to: "/admin/permissions", label: "All Permissions" }]
     }
 };
 

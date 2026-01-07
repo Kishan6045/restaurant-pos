@@ -24,7 +24,15 @@ const Login = () => {
 
       // backend role decide karta hai
       toast.success("Login successful");
-      navigate(`/${res.data.role}`);
+      // navigate(`/${res.data.role}`);
+      const roleRouteMap = {
+  admin: "/admin",
+  cashier: "/cashier",
+  kitchen: "/kitchen",
+};
+
+navigate(roleRouteMap[res.data.role] || "/login");
+
 
     } catch (error) {
       const msg =

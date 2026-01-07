@@ -4,24 +4,9 @@ const router = express.Router();
 const auth = require("../middlewares/authMiddleware");
 const role = require("../middlewares/roleMiddleware");
 
-const {
-    dailyReport,
-    monthlyReport
-} = require("../controllers/reportController");
+const { report } = require("../controllers/reportController");
 
-router.get(
-           "/daily",
-            auth,
-            role("admin"),
-            dailyReport
-        );
-
-router.get(
-           "/monthly",
-           auth,
-           role("admin"),
-           monthlyReport
-);
+router.get("/", auth, role("admin"), report);
 
 
 module.exports = router; 
