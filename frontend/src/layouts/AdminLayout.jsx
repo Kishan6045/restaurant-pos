@@ -7,8 +7,8 @@ import { Outlet } from "react-router-dom";
 const AdminLayout = () => {
   const [activeMenu, setActiveMenu] = useState(null);
 
-  return ( 
-    <div className="h-screen flex bg-gray-100 overflow-hidden">
+  return (
+    <div className="h-screen flex bg-gray-100">
 
 
       <IconSidebar
@@ -23,11 +23,10 @@ const AdminLayout = () => {
         />
       )}
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
         <Header role="admin" />
 
-        {/* <main className="flex-1 p-4 overflow-y-auto"> */}
-        <main className="flex-1 p-4 overflow-y-auto overflow-x-auto md:overflow-x-hidden">
+        <main className="flex-1 p-4 overflow-y-auto">
 
           <Outlet />
         </main>

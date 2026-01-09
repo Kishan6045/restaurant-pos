@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import AuthProvider from "./auth/AuthProvider";
 import Login from "./auth/Login";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AdminLayout from "./layouts/AdminLayout";
 
-import AdminDashboard from "./pages/admin/AdminDashboard";
+// import AdminDashboard from "./pages/admin/AdminDashboard";
+import Overview from "./pages/admin/Overview";
 import Categories from "./pages/admin/Categories";
 import Products from "./pages/admin/Products";
 import Tables from "./pages/admin/Tables";
@@ -21,16 +23,18 @@ import BillingScreen from "./pages/cashier/BillingScreen";
 function App() {
   return (
     <BrowserRouter>  {/*without relod login */}
+    <AuthProvider>
       <ToastContainer position="top-right" autoClose={3000} />
 
       <Routes>
         {/* default */}
-        <Route path="/" element={<Navigate to="/login" />} />
+         <Route path="/" element={<Navigate to="/login" />} />
          <Route path="/login" element={<Login />} />
 
         {/* Admin layout */}
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
+          {/* <Route index element={<AdminDashboard />} /> */}
+          <Route index element={< Overview/>} />
           <Route path="categories" element={<Categories/>}/>
           <Route path="products" element={<Products/>}/>
           <Route path="tables" element={<Tables/>}/>
@@ -55,6 +59,7 @@ function App() {
 
 
         </Routes>
+        </AuthProvider>
     </BrowserRouter>
   );
 }

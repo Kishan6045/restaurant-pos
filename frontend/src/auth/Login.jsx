@@ -1,13 +1,54 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "../utils/axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 
 
 const Login = () => {
   const navigate = useNavigate();
+    const location = useLocation();   
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true); // page load check
+
+
+  //  AUTO REDIRECT IF ALREADY LOGGED IN
+  useEffect(() => {
+    const refreshToken = localStorage.getItem("refreshToken");
+    const role = localStorage.getItem("role");
+
+    const roleRouteMap = {
+      admin: "/admin",
+      cashier: "/cashier",
+      kitchen: "/kitchen",
+    };
+
+    if (
+      refreshToken &&
+      role &&
+      roleRouteMap[role] &&
+      (location.pathname === "/login" || location.pathname === "/")
+    ) {
+      navigate(roleRouteMap[role], { replace: true });
+    }
+
+    // ✅ HAR CASE me loader band
+    setCheckingAuth(false);
+  }, [navigate, location.pathname]);
+
+  // 🔄 Loader while checking session
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600 text-sm">Checking session...</p>
+        </div>
+      </div>
+    );
+  }
+
+
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -19,19 +60,21 @@ const Login = () => {
     try {
       const res = await api.post("/api/auth/login", form);
 
-      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("accessToken", res.data.accessToken);
+      localStorage.setItem("refreshToken", res.data.refreshToken);
       localStorage.setItem("role", res.data.role);
+
 
       // backend role decide karta hai
       toast.success("Login successful");
       // navigate(`/${res.data.role}`);
       const roleRouteMap = {
-  admin: "/admin",
-  cashier: "/cashier",
-  kitchen: "/kitchen",
-};
+        admin: "/admin",
+        cashier: "/cashier",
+        kitchen: "/kitchen",
+      };
 
-navigate(roleRouteMap[res.data.role] || "/login");
+      navigate(roleRouteMap[res.data.role] || "/login");
 
 
     } catch (error) {

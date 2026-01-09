@@ -4,7 +4,7 @@ import { ChevronLeft } from "lucide-react"; // sub sidebar icon
 const menuConfig = {
     dashboard: {
         title: "Dashboard",
-        links: [{ to: "/admin", label: "Overview" }]
+        links: [{ to: "/admin", label: "Overview" }]  
     },
     menu: {
         title: "Menu",

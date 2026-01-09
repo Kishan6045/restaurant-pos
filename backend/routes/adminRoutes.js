@@ -7,17 +7,21 @@ const permit = require("../middlewares/permissionMiddleware");
 
 
 const {
-  getDashboard,
+  // getDashboard,
   createUser,
   createProduct
 } = require("../controllers/adminController");
+const {
+  dashboardOverview
+} = require("../controllers/dashboardController");
 
-// Dashboard
+
+//  DASHBOARD
 router.get(
-  "/dashboard",
+  "/overview",
   auth,
-  permit("dashboard.read"),    // role("admin"),
-  getDashboard
+  permit("dashboard.read"),
+  dashboardOverview
 );
 
 // Create User

@@ -2,10 +2,7 @@ const bcrypt = require("bcrypt");
 const User = require("../models/User-Model");
 const Products = require("../models/Products-Model");
 
-// ---------------- DASHBOARD ----------------
-exports.getDashboard = (req, res) => {
-    res.json({ message: "Welcome Admin" });
-};
+
 
 // ---------------- CREATE USER ----------------
 exports.createUser = async (req, res) => {
