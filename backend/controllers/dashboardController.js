@@ -7,15 +7,46 @@ const User = require("../models/User-Model");
 //Permission: dashboard.read
 const dashboardOverview = async (req, res) => {
     try {
-        const { from, to } = req.query;
+        const { from, to, preset } = req.query;
 
-        const start = from
-            ? new Date(from)
-            : new Date(new Date().setHours(0, 0, 0, 0));
+        const now = new Date();
+        const startOfToday = new Date(new Date().setHours(0, 0, 0, 0));
+        const endOfToday = new Date(new Date().setHours(23, 59, 59, 999));
 
-        const end = to
-            ? new Date(new Date(to).setHours(23, 59, 59, 999))
-            : new Date(new Date().setHours(23, 59, 59, 999));
+        const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+
+        // preset supported:
+        // - 3d, 7d, 10d, 20d, 30d
+        // - this_month
+        const presetDaysMap = {
+            "3d": 3,
+            "7d": 7,
+            "10d": 10,
+            "20d": 20,
+            "30d": 30,
+        };
+
+        let start;
+        let end;
+
+        if (preset === "this_month") {
+            start = startOfThisMonth;
+            end = endOfToday;
+        } else if (preset && presetDaysMap[preset]) {
+            const days = presetDaysMap[preset];
+            // inclusive range: today + previous (days - 1) days
+            start = new Date(startOfToday);
+            start.setDate(start.getDate() - (days - 1));
+            end = endOfToday;
+        } else {
+            start = from
+                ? new Date(from)
+                : startOfToday;
+
+            end = to
+                ? new Date(new Date(to).setHours(23, 59, 59, 999))
+                : endOfToday;
+        }
 
         /* ================= ORDERS ================= */
         const totalOrders = await Order.countDocuments({
@@ -135,6 +166,7 @@ const dashboardOverview = async (req, res) => {
                 from: start,
                 to: end
             },
+            preset: preset || null,
             totalSales,
             totalOrders,
             orderStatus,

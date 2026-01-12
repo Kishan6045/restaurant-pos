@@ -13,6 +13,7 @@ const Overview = () => {
   const [error, setError] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [preset, setPreset] = useState("7d"); // default: last 7 days
 
   const currency = useMemo(
     () =>
@@ -31,10 +32,16 @@ const Overview = () => {
       setError("");
 
       const params = {};
+      const nextPreset = opts.preset ?? preset;
       const fromDate = opts.from ?? from;
       const toDate = opts.to ?? to;
-      if (fromDate) params.from = fromDate;
-      if (toDate) params.to = toDate;
+
+      if (nextPreset && nextPreset !== "custom") {
+        params.preset = nextPreset;
+      } else {
+        if (fromDate) params.from = fromDate;
+        if (toDate) params.to = toDate;
+      }
 
       const res = await api.get("/api/admin/overview", { params });
 
@@ -54,7 +61,7 @@ const Overview = () => {
   };
 
   useEffect(() => {
-    fetchOverview();
+    fetchOverview({ preset: "7d" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -103,33 +110,69 @@ const Overview = () => {
           </p>
         </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-500">From</label>
-            <input
-              type="date"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              className="border rounded px-2 py-1 text-sm"
-            />
+        <div className="flex flex-col gap-3 sm:items-end">
+          {/* Quick presets */}
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: "3d", label: "Last 3 Days" },
+              { key: "7d", label: "Last 7 Days" },
+              { key: "10d", label: "Last 10 Days" },
+              { key: "20d", label: "Last 20 Days" },
+              { key: "30d", label: "Last 30 Days" },
+              { key: "this_month", label: "This Month" },
+              { key: "custom", label: "Custom" },
+            ].map((p) => {
+              const active = preset === p.key;
+              return (
+                <button
+                  key={p.key}
+                  onClick={() => {
+                    setPreset(p.key);
+                    if (p.key !== "custom") fetchOverview({ preset: p.key });
+                  }}
+                  className={
+                    active
+                      ? "px-3 py-2 rounded bg-blue-600 text-white text-sm"
+                      : "px-3 py-2 rounded bg-white border text-sm hover:bg-gray-50"
+                  }
+                >
+                  {p.label}
+                </button>
+              );
+            })}
           </div>
 
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-500">To</label>
-            <input
-              type="date"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              className="border rounded px-2 py-1 text-sm"
-            />
-          </div>
+          {/* Custom range */}
+          {preset === "custom" && (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-500">From</label>
+                <input
+                  type="date"
+                  value={from}
+                  onChange={(e) => setFrom(e.target.value)}
+                  className="border rounded px-2 py-1 text-sm"
+                />
+              </div>
 
-          <button
-            onClick={() => fetchOverview()}
-            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-          >
-            Apply
-          </button>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-500">To</label>
+                <input
+                  type="date"
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                  className="border rounded px-2 py-1 text-sm"
+                />
+              </div>
+
+              <button
+                onClick={() => fetchOverview({ preset: "custom" })}
+                className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Apply
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
