@@ -25,6 +25,30 @@ const Overview = () => {
     []
   );
 
+  // ✅ MUST be above any early return (Rules of Hooks)
+  const groupedTables = useMemo(() => {
+    const list = data?.tables || [];
+    const grouped = {};
+    for (const t of list) {
+      const floor = t?.floor || "Ground";
+      if (!grouped[floor]) grouped[floor] = [];
+      grouped[floor].push(t);
+    }
+    const floors = Object.keys(grouped);
+    floors.sort((a, b) => {
+      if (a === "Ground") return -1;
+      if (b === "Ground") return 1;
+      return a.localeCompare(b);
+    });
+    const ordered = {};
+    for (const f of floors) {
+      ordered[f] = grouped[f]
+        .slice()
+        .sort((x, y) => (x.tableNumber || 0) - (y.tableNumber || 0));
+    }
+    return ordered;
+  }, [data]);
+
   const formatDay = (value) => {
     if (!value) return "";
     const d = new Date(value);
@@ -124,29 +148,6 @@ const Overview = () => {
     rangeFrom && rangeTo
       ? `${formatDay(rangeFrom)} → ${formatDay(rangeTo)}`
       : "";
-
-  const groupedTables = useMemo(() => {
-    const list = data?.tables || [];
-    const grouped = {};
-    for (const t of list) {
-      const floor = t?.floor || "Ground";
-      if (!grouped[floor]) grouped[floor] = [];
-      grouped[floor].push(t);
-    }
-    const floors = Object.keys(grouped);
-    floors.sort((a, b) => {
-      if (a === "Ground") return -1;
-      if (b === "Ground") return 1;
-      return a.localeCompare(b);
-    });
-    const ordered = {};
-    for (const f of floors) {
-      ordered[f] = grouped[f]
-        .slice()
-        .sort((x, y) => (x.tableNumber || 0) - (y.tableNumber || 0));
-    }
-    return ordered;
-  }, [data]);
 
   const formatTime = (value) => {
     if (!value) return "";
