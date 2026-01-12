@@ -125,6 +125,29 @@ const Overview = () => {
       ? `${formatDay(rangeFrom)} → ${formatDay(rangeTo)}`
       : "";
 
+  const groupedTables = useMemo(() => {
+    const list = data?.tables || [];
+    const grouped = {};
+    for (const t of list) {
+      const floor = t?.floor || "Ground";
+      if (!grouped[floor]) grouped[floor] = [];
+      grouped[floor].push(t);
+    }
+    const floors = Object.keys(grouped);
+    floors.sort((a, b) => {
+      if (a === "Ground") return -1;
+      if (b === "Ground") return 1;
+      return a.localeCompare(b);
+    });
+    const ordered = {};
+    for (const f of floors) {
+      ordered[f] = grouped[f]
+        .slice()
+        .sort((x, y) => (x.tableNumber || 0) - (y.tableNumber || 0));
+    }
+    return ordered;
+  }, [data]);
+
   const formatTime = (value) => {
     if (!value) return "";
     const d = new Date(value);
@@ -319,23 +342,43 @@ const Overview = () => {
               ))}
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-              {(data.tables || []).map((t) => (
-                <div
-                  key={t._id}
-                  className={`rounded-xl border px-3 py-2 text-sm font-medium flex items-center justify-between ${
-                    t.status === "occupied"
-                      ? "bg-red-50 border-red-200 text-red-800"
-                      : "bg-green-50 border-green-200 text-green-800"
-                  }`}
-                  title={`${t.floor || "Ground"} • Table ${t.tableNumber}`}
-                >
-                  <span className="tabular-nums">T{t.tableNumber}</span>
-                  <span className="text-[10px] uppercase tracking-wide opacity-80">
-                    {t.status}
-                  </span>
-                </div>
-              ))}
+            {/* Scrollable tables list (handles lots of tables) */}
+            <div className="max-h-[420px] overflow-y-auto pr-1">
+              <div className="space-y-4">
+                {Object.entries(groupedTables).map(([floor, list]) => (
+                  <div key={floor}>
+                    <div className="sticky top-0 z-10 bg-white pb-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-gray-900">
+                          {floor}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {list.length} tables
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+                      {list.map((t) => (
+                        <div
+                          key={t._id}
+                          className={`rounded-xl border px-3 py-2 text-sm font-medium flex items-center justify-between ${
+                            t.status === "occupied"
+                              ? "bg-red-50 border-red-200 text-red-800"
+                              : "bg-green-50 border-green-200 text-green-800"
+                          }`}
+                          title={`${floor} • Table ${t.tableNumber}`}
+                        >
+                          <span className="tabular-nums">T{t.tableNumber}</span>
+                          <span className="text-[10px] uppercase tracking-wide opacity-80">
+                            {t.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -382,73 +425,75 @@ const Overview = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b bg-gray-50 text-gray-600">
-                  <th className="py-3 px-3 rounded-tl-xl">Time</th>
-                  <th className="py-3 px-3">Table</th>
-                  <th className="py-3 px-3">Order</th>
-                  <th className="py-3 px-3">Payment</th>
-                  <th className="py-3 px-3 text-right">Items</th>
-                  <th className="py-3 px-3 text-right rounded-tr-xl">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(data.recentOrders || []).map((o) => (
-                  <tr
-                    key={o._id}
-                    className="border-b last:border-b-0 hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="py-3 px-3 text-gray-700 tabular-nums">
-                      {formatTime(o.createdAt)}
-                    </td>
-                    <td className="py-3 px-3">
-                      {o.table ? (
-                        <div className="flex flex-col">
-                          <span className="font-medium text-gray-900">
-                            T{o.table.tableNumber}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {o.table.floor || "Ground"}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3">
-                      {badge(
-                        (o.orderStatus || "—").toUpperCase(),
-                        o.orderStatus === "open"
-                          ? "blue"
-                          : o.orderStatus === "billed"
-                          ? "amber"
-                          : "green"
-                      )}
-                    </td>
-                    <td className="py-3 px-3">
-                      <div className="flex flex-col gap-1">
-                        {badge(
-                          (o.paymentStatus || "—").toUpperCase(),
-                          o.paymentStatus === "paid" ? "green" : "red"
-                        )}
-                        {o.paymentMethod ? (
-                          <span className="text-xs text-gray-500 uppercase">
-                            {o.paymentMethod}
-                          </span>
-                        ) : null}
-                      </div>
-                    </td>
-                    <td className="py-3 px-3 text-right tabular-nums font-medium">
-                      {o.itemsCount ?? 0}
-                    </td>
-                    <td className="py-3 px-3 text-right tabular-nums font-semibold text-gray-900">
-                      {currency.format(o.totalAmount || 0)}
-                    </td>
+            <div className="max-h-[420px] overflow-y-auto rounded-xl border">
+              <table className="w-full text-left text-sm">
+                <thead className="sticky top-0 z-10 bg-gray-50">
+                  <tr className="border-b text-gray-600">
+                    <th className="py-3 px-3 rounded-tl-xl">Time</th>
+                    <th className="py-3 px-3">Table</th>
+                    <th className="py-3 px-3">Order</th>
+                    <th className="py-3 px-3">Payment</th>
+                    <th className="py-3 px-3 text-right">Items</th>
+                    <th className="py-3 px-3 text-right rounded-tr-xl">Amount</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {(data.recentOrders || []).map((o) => (
+                    <tr
+                      key={o._id}
+                      className="border-b last:border-b-0 hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="py-3 px-3 text-gray-700 tabular-nums whitespace-nowrap">
+                        {formatTime(o.createdAt)}
+                      </td>
+                      <td className="py-3 px-3 whitespace-nowrap">
+                        {o.table ? (
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-900">
+                              T{o.table.tableNumber}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {o.table.floor || "Ground"}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 whitespace-nowrap">
+                        {badge(
+                          (o.orderStatus || "—").toUpperCase(),
+                          o.orderStatus === "open"
+                            ? "blue"
+                            : o.orderStatus === "billed"
+                              ? "amber"
+                              : "green"
+                        )}
+                      </td>
+                      <td className="py-3 px-3 whitespace-nowrap">
+                        <div className="flex flex-col gap-1">
+                          {badge(
+                            (o.paymentStatus || "—").toUpperCase(),
+                            o.paymentStatus === "paid" ? "green" : "red"
+                          )}
+                          {o.paymentMethod ? (
+                            <span className="text-xs text-gray-500 uppercase">
+                              {o.paymentMethod}
+                            </span>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="py-3 px-3 text-right tabular-nums font-medium whitespace-nowrap">
+                        {o.itemsCount ?? 0}
+                      </td>
+                      <td className="py-3 px-3 text-right tabular-nums font-semibold text-gray-900 whitespace-nowrap">
+                        {currency.format(o.totalAmount || 0)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
