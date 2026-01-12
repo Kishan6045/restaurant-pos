@@ -11,6 +11,8 @@ const Overview = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [preset, setPreset] = useState("today"); // default: today
 
   const currency = useMemo(
@@ -62,7 +64,8 @@ const Overview = () => {
     { value: "today", label: "Today" },
     { value: "yesterday", label: "Yesterday" },
     { value: "7d", label: "Last 7 days" },
-    { value: "30d", label: "Last 1 month" },
+    { value: "30d", label: "Last 30 days" },
+    { value: "custom", label: "Custom" },
   ];
 
   // 🔄 Load dashboard data
@@ -71,7 +74,14 @@ const Overview = () => {
       setLoading(true);
       setError("");
 
-      const params = { preset: opts.preset ?? preset };
+      const nextPreset = opts.preset ?? preset;
+      const params = {};
+      if (nextPreset === "custom") {
+        if (from) params.from = from;
+        if (to) params.to = to;
+      } else {
+        params.preset = nextPreset;
+      }
 
       const res = await api.get("/api/admin/overview", { params });
 
@@ -186,25 +196,50 @@ const Overview = () => {
             </div>
           </div>
 
-          <div className="flex items-end justify-end">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-gray-500">Range</label>
-              <select
-                value={preset}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  setPreset(next);
-                  fetchOverview({ preset: next });
-                }}
-                className="h-10 min-w-[180px] rounded-lg border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {presetOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+          <div className="flex flex-col items-end gap-3">
+            <div className="flex items-end justify-end">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-500">Range</label>
+                <select
+                  value={preset}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setPreset(next);
+                    if (next !== "custom") fetchOverview({ preset: next });
+                  }}
+                  className="h-10 min-w-[180px] rounded-lg border bg-white px-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {presetOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
+
+            {preset === "custom" && (
+              <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+                <input
+                  type="date"
+                  value={from}
+                  onChange={(e) => setFrom(e.target.value)}
+                  className="h-10 rounded-lg border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  type="date"
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                  className="h-10 rounded-lg border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  onClick={() => fetchOverview({ preset: "custom" })}
+                  className="h-10 px-4 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+                >
+                  Apply
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
