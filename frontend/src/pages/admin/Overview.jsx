@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../utils/axios";
 
 // Dashboard components
@@ -11,14 +11,32 @@ const Overview = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+
+  const currency = useMemo(
+    () =>
+      new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        maximumFractionDigits: 0,
+      }),
+    []
+  );
 
   // 🔄 Load dashboard data
-  const fetchOverview = async () => {
+  const fetchOverview = async (opts = {}) => {
     try {
       setLoading(true);
       setError("");
 
-      const res = await api.get("api/admin/overview");
+      const params = {};
+      const fromDate = opts.from ?? from;
+      const toDate = opts.to ?? to;
+      if (fromDate) params.from = fromDate;
+      if (toDate) params.to = toDate;
+
+      const res = await api.get("/api/admin/overview", { params });
 
       setData(res.data);
     } catch (err) {
@@ -37,6 +55,7 @@ const Overview = () => {
 
   useEffect(() => {
     fetchOverview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ⏳ LOADING
@@ -54,6 +73,12 @@ const Overview = () => {
       <div className="h-[60vh] flex flex-col items-center justify-center text-red-500">
         <p className="mb-2 font-semibold">Failed to load dashboard</p>
         <p className="text-sm text-gray-500">{error}</p>
+        <button
+          onClick={() => fetchOverview()}
+          className="mt-4 px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -69,24 +94,62 @@ const Overview = () => {
 
   return (
     <div className="p-6 space-y-6">
+      {/* ===================== HEADER / FILTERS ===================== */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Dashboard Overview</h2>
+          <p className="text-sm text-gray-500">
+            Track sales, payments, and order flow.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-500">From</label>
+            <input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              className="border rounded px-2 py-1 text-sm"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-500">To</label>
+            <input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className="border rounded px-2 py-1 text-sm"
+            />
+          </div>
+
+          <button
+            onClick={() => fetchOverview()}
+            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Apply
+          </button>
+        </div>
+      </div>
 
       {/* ===================== TOP STATS ===================== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Sales" value={`₹${data.totalSales}`} />
-        <StatCard title="Total Orders" value={data.totalOrders} />
-        <StatCard title="Staff On Duty" value={data.staffOnDuty} />
+        <StatCard title="Total Sales" value={currency.format(data.totalSales || 0)} />
+        <StatCard title="Total Orders" value={data.totalOrders ?? 0} />
+        <StatCard title="Staff On Duty" value={data.staffOnDuty ?? 0} />
         <StatCard
           title="Occupied Tables"
-          value={`${data.activeTables.occupied} / ${data.activeTables.total}`}
+          value={`${data.activeTables?.occupied ?? 0} / ${data.activeTables?.total ?? 0}`}
         />
       </div>
 
       {/* ===================== CHARTS ===================== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <PaymentPieChart data={data.paymentSummary} />
+        <PaymentPieChart data={data.paymentSummary || {}} />
 
         <div className="bg-white rounded-xl shadow p-4">
-          <SalesLineChart data={data.salesGraph} />
+          <SalesLineChart data={data.salesGraph || []} />
         </div>
       </div>
 
@@ -95,7 +158,7 @@ const Overview = () => {
         <h3 className="font-semibold mb-3">Order Status</h3>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {data.orderStatus.map(status => (
+          {(data.orderStatus || []).map((status) => (
             <div
               key={status._id}
               className="border rounded p-3 text-center"

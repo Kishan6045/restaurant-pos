@@ -18,17 +18,26 @@ const dashboardOverview = async (req, res) => {
             : new Date(new Date().setHours(23, 59, 59, 999));
 
         /* ================= ORDERS ================= */
-        const orders = await Order.find({
+        const totalOrders = await Order.countDocuments({
             createdAt: { $gte: start, $lte: end }
         });
-        const totalOrders = orders.length;
 
-        const completedOrders = orders.filter(o => o.status === "completed");
-
-        const totalSales = completedOrders.reduce(
-            (sum, o) => sum + (o.totalAmount || 0),
-            0
-        );
+        // Treat "sales" as paid orders total (matches actual revenue best).
+        const totalSalesAgg = await Order.aggregate([
+            {
+                $match: {
+                    paymentStatus: "paid",
+                    createdAt: { $gte: start, $lte: end }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    total: { $sum: "$totalAmount" }
+                }
+            }
+        ]);
+        const totalSales = totalSalesAgg?.[0]?.total || 0;
 
 
         // order status :  dekhata hai
@@ -36,7 +45,7 @@ const dashboardOverview = async (req, res) => {
             { $match: { createdAt: { $gte: start, $lte: end } } },
             {
                 $group: {
-                    _id: "$status",
+                    _id: "$orderStatus",
                     count: { $sum: 1 }
                 }
             }
@@ -55,7 +64,7 @@ const dashboardOverview = async (req, res) => {
 
         // payment total -------------------------------------------
         const payments = await Payment.aggregate([
-            { $match: { createdAt: { $gte: start, $lte: end } } },
+            { $match: { paidAt: { $gte: start, $lte: end } } },
             {
                 $group: {
                     _id: "$method", // cash | upi | card
@@ -76,7 +85,7 @@ const dashboardOverview = async (req, res) => {
         const salesGraphRaw = await Order.aggregate([
             {
                 $match: {
-                    status: "completed",
+                    paymentStatus: "paid",
                     createdAt: { $gte: start, $lte: end }
                 }
             },
@@ -101,6 +110,25 @@ const dashboardOverview = async (req, res) => {
             amount: d.total
         }));
 
+        /* ================= TOP ITEMS ================= */
+        const topItems = await Order.aggregate([
+            {
+                $match: {
+                    paymentStatus: "paid",
+                    createdAt: { $gte: start, $lte: end }
+                }
+            },
+            { $unwind: "$items" },
+            {
+                $group: {
+                    _id: "$items.name",
+                    quantity: { $sum: "$items.quantity" }
+                }
+            },
+            { $sort: { quantity: -1 } },
+            { $limit: 8 }
+        ]);
+
         /* ================= FINAL RESPONSE ================= */
         res.json({
             range: {
@@ -117,7 +145,8 @@ const dashboardOverview = async (req, res) => {
             staffOnDuty,
             paymentSummary,
 
-            salesGraph
+            salesGraph,
+            topItems
         });
 
     } catch (error) {
