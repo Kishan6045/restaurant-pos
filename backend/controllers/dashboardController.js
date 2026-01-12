@@ -2,6 +2,8 @@ const Order = require("../models/Order-Model");
 const Payment = require("../models/Payment-Model");
 const Table = require("../models/Table-Model");
 const User = require("../models/User-Model");
+const Product = require("../models/Products-Model");
+const Category = require("../models/Category-Model");
 
 const toYMD = (date) => {
     const d = new Date(date);
@@ -65,43 +67,110 @@ const dashboardOverview = async (req, res) => {
                 : endOfToday;
         }
 
-        /* ================= ORDERS ================= */
-        const totalOrders = await Order.countDocuments({
-            createdAt: { $gte: start, $lte: end }
-        });
+        /* ================= PARALLEL QUERIES (FAST) ================= */
+        const [
+            totalOrders,
+            paidOrders,
+            unpaidOrders,
+            staffOnDuty,
+            totalTables,
+            occupiedTables,
+            availableTables,
+            tables,
+            totalProducts,
+            activeProducts,
+            totalCategories,
+            activeCategories,
+            payments,
+            totalSalesAgg,
+            orderStatusRaw,
+            salesGraphRaw,
+            topItems,
+            recentOrders,
+        ] = await Promise.all([
+            Order.countDocuments({ createdAt: { $gte: start, $lte: end } }),
+            Order.countDocuments({ paymentStatus: "paid", createdAt: { $gte: start, $lte: end } }),
+            Order.countDocuments({ paymentStatus: "unpaid", createdAt: { $gte: start, $lte: end } }),
 
-        // Treat "sales" as paid orders total (matches actual revenue best).
-        const totalSalesAgg = await Order.aggregate([
-            {
-                $match: {
-                    paymentStatus: "paid",
-                    createdAt: { $gte: start, $lte: end }
-                }
-            },
-            {
-                $group: {
-                    _id: null,
-                    total: { $sum: "$totalAmount" }
-                }
-            }
+            User.countDocuments({ role: "cashier", isActive: true }),
+
+            Table.countDocuments(),
+            Table.countDocuments({ status: "occupied" }),
+            Table.countDocuments({ status: "available" }),
+            Table.find({}, "tableNumber floor status").sort({ floor: 1, tableNumber: 1 }).lean(),
+
+            Product.countDocuments(),
+            Product.countDocuments({ isActive: true }),
+            Category.countDocuments(),
+            Category.countDocuments({ isActive: true }),
+
+            Payment.aggregate([
+                { $match: { paidAt: { $gte: start, $lte: end } } },
+                { $group: { _id: "$method", total: { $sum: "$amount" } } }
+            ]),
+
+            Order.aggregate([
+                {
+                    $match: {
+                        paymentStatus: "paid",
+                        createdAt: { $gte: start, $lte: end }
+                    }
+                },
+                { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+            ]),
+
+            Order.aggregate([
+                { $match: { createdAt: { $gte: start, $lte: end } } },
+                { $group: { _id: "$orderStatus", count: { $sum: 1 } } }
+            ]),
+
+            Order.aggregate([
+                {
+                    $match: {
+                        paymentStatus: "paid",
+                        createdAt: { $gte: start, $lte: end }
+                    }
+                },
+                {
+                    $group: {
+                        _id: {
+                            day: {
+                                $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+                            }
+                        },
+                        total: { $sum: "$totalAmount" }
+                    }
+                },
+                { $sort: { "_id.day": 1 } }
+            ]),
+
+            Order.aggregate([
+                { $match: { paymentStatus: "paid", createdAt: { $gte: start, $lte: end } } },
+                { $unwind: "$items" },
+                { $group: { _id: "$items.name", quantity: { $sum: "$items.quantity" } } },
+                { $sort: { quantity: -1 } },
+                { $limit: 8 }
+            ]),
+
+            Order.find({ createdAt: { $gte: start, $lte: end } })
+                .sort({ createdAt: -1 })
+                .limit(12)
+                .select("createdAt tableId orderStatus paymentStatus paymentMethod totalAmount items")
+                .populate("tableId", "tableNumber floor")
+                .lean(),
         ]);
+
         const totalSales = totalSalesAgg?.[0]?.total || 0;
 
+        const paymentSummary = { cash: 0, upi: 0, card: 0 };
+        (payments || []).forEach(p => {
+            if (p && p._id) paymentSummary[p._id] = p.total;
+        });
 
-        // order status :  dekhata hai
-        const orderStatus = await Order.aggregate([
-            { $match: { createdAt: { $gte: start, $lte: end } } },
-            {
-                $group: {
-                    _id: "$orderStatus",
-                    count: { $sum: 1 }
-                }
-            }
-        ]);
         // Always return all statuses (UI should not look empty)
         const ORDER_STATUSES = ["open", "billed", "closed"];
         const orderStatusMap = {};
-        orderStatus.forEach((s) => {
+        (orderStatusRaw || []).forEach((s) => {
             if (s && s._id) orderStatusMap[s._id] = s.count || 0;
         });
         const orderStatusNormalized = ORDER_STATUSES.map((s) => ({
@@ -109,60 +178,10 @@ const dashboardOverview = async (req, res) => {
             count: orderStatusMap[s] || 0
         }));
 
-        // Table status --------------------------------------------------
-        const totalTables = await Table.countDocuments();
-        const occupiedTables = await Table.countDocuments({ status: "occupied" });
-
-        // STAFF ON DUTY (Only Cashier )   ----------------------------
-        const staffOnDuty = await User.countDocuments({
-            role: "cashier",
-            isActive: true
-        });
-
-
-        // payment total -------------------------------------------
-        const payments = await Payment.aggregate([
-            { $match: { paidAt: { $gte: start, $lte: end } } },
-            {
-                $group: {
-                    _id: "$method", // cash | upi | card
-                    total: { $sum: "$amount" }
-                }
-            }
-        ]);
-        
-        const paymentSummary = { cash: 0, upi: 0, card: 0 };
-        payments.forEach(p => {            // loop se csah upi sab ka total kar raha hai
-            paymentSummary[p._id] = p.total;
-        });
-
 
 
 
         /* ================= SALES GRAPH (RANGE BASED) ================= */
-        const salesGraphRaw = await Order.aggregate([
-            {
-                $match: {
-                    paymentStatus: "paid",
-                    createdAt: { $gte: start, $lte: end }
-                }
-            },
-            {
-                $group: {
-                    _id: {
-                        day: {
-                            $dateToString: {
-                                format: "%Y-%m-%d",
-                                date: "$createdAt"
-                            }
-                        }
-                    },
-                    total: { $sum: "$totalAmount" }
-                }
-            },
-            { $sort: { "_id.day": 1 } }
-        ]);
-
         const salesGraph = salesGraphRaw.map(d => ({
             date: d._id.day,
             amount: d.total
@@ -186,24 +205,15 @@ const dashboardOverview = async (req, res) => {
             salesGraphFilled = filled;
         }
 
-        /* ================= TOP ITEMS ================= */
-        const topItems = await Order.aggregate([
-            {
-                $match: {
-                    paymentStatus: "paid",
-                    createdAt: { $gte: start, $lte: end }
-                }
-            },
-            { $unwind: "$items" },
-            {
-                $group: {
-                    _id: "$items.name",
-                    quantity: { $sum: "$items.quantity" }
-                }
-            },
-            { $sort: { quantity: -1 } },
-            { $limit: 8 }
-        ]);
+        /* ================= TABLES BY FLOOR ================= */
+        const tablesByFloor = (tables || []).reduce((acc, t) => {
+            const floor = t.floor || "Ground";
+            if (!acc[floor]) acc[floor] = { total: 0, occupied: 0, available: 0 };
+            acc[floor].total += 1;
+            if (t.status === "occupied") acc[floor].occupied += 1;
+            else acc[floor].available += 1;
+            return acc;
+        }, {});
 
         /* ================= FINAL RESPONSE ================= */
         res.json({
@@ -214,16 +224,45 @@ const dashboardOverview = async (req, res) => {
             preset: preset || null,
             totalSales,
             totalOrders,
-            orderStatus: orderStatusNormalized,
-            activeTables: {
-                occupied: occupiedTables,
-                total: totalTables
+            ordersSummary: {
+                paid: paidOrders,
+                unpaid: unpaidOrders,
             },
+            orderStatus: orderStatusNormalized,
+            tablesSummary: {
+                total: totalTables,
+                occupied: occupiedTables,
+                available: availableTables,
+            },
+            tablesByFloor,
+            tables,
             staffOnDuty,
+            menuSummary: {
+                products: { total: totalProducts, active: activeProducts },
+                categories: { total: totalCategories, active: activeCategories },
+            },
             paymentSummary,
 
             salesGraph: salesGraphFilled,
-            topItems
+            topItems,
+            recentOrders: (recentOrders || []).map((o) => ({
+                _id: o._id,
+                createdAt: o.createdAt,
+                table: o.tableId
+                    ? {
+                        _id: o.tableId._id,
+                        tableNumber: o.tableId.tableNumber,
+                        floor: o.tableId.floor,
+                    }
+                    : null,
+                orderStatus: o.orderStatus,
+                paymentStatus: o.paymentStatus,
+                paymentMethod: o.paymentMethod || null,
+                totalAmount: o.totalAmount,
+                itemsCount: Array.isArray(o.items)
+                    ? o.items.reduce((sum, it) => sum + (it.quantity || 0), 0)
+                    : 0,
+            }))
         });
 
     } catch (error) {
