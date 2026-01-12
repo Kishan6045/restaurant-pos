@@ -3,6 +3,14 @@ const Payment = require("../models/Payment-Model");
 const Table = require("../models/Table-Model");
 const User = require("../models/User-Model");
 
+const toYMD = (date) => {
+    const d = new Date(date);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+};
+
 // URL: GET /api/admin/overview?from=YYYY-MM-DD&to=YYYY-MM-DD
 //Permission: dashboard.read
 const dashboardOverview = async (req, res) => {
@@ -90,6 +98,16 @@ const dashboardOverview = async (req, res) => {
                 }
             }
         ]);
+        // Always return all statuses (UI should not look empty)
+        const ORDER_STATUSES = ["open", "billed", "closed"];
+        const orderStatusMap = {};
+        orderStatus.forEach((s) => {
+            if (s && s._id) orderStatusMap[s._id] = s.count || 0;
+        });
+        const orderStatusNormalized = ORDER_STATUSES.map((s) => ({
+            _id: s,
+            count: orderStatusMap[s] || 0
+        }));
 
         // Table status --------------------------------------------------
         const totalTables = await Table.countDocuments();
@@ -150,6 +168,24 @@ const dashboardOverview = async (req, res) => {
             amount: d.total
         }));
 
+        // Fill missing dates (keeps line chart continuous).
+        // To avoid heavy computation on huge custom ranges, only fill up to 370 days.
+        const startDay = new Date(new Date(start).setHours(0, 0, 0, 0));
+        const endDay = new Date(new Date(end).setHours(0, 0, 0, 0));
+        const diffDays = Math.floor((endDay - startDay) / (1000 * 60 * 60 * 24)) + 1;
+        let salesGraphFilled = salesGraph;
+        if (diffDays > 0 && diffDays <= 370) {
+            const salesMap = new Map(salesGraph.map((d) => [d.date, d.amount || 0]));
+            const filled = [];
+            const cur = new Date(startDay);
+            while (cur <= endDay) {
+                const key = toYMD(cur);
+                filled.push({ date: key, amount: salesMap.get(key) || 0 });
+                cur.setDate(cur.getDate() + 1);
+            }
+            salesGraphFilled = filled;
+        }
+
         /* ================= TOP ITEMS ================= */
         const topItems = await Order.aggregate([
             {
@@ -178,7 +214,7 @@ const dashboardOverview = async (req, res) => {
             preset: preset || null,
             totalSales,
             totalOrders,
-            orderStatus,
+            orderStatus: orderStatusNormalized,
             activeTables: {
                 occupied: occupiedTables,
                 total: totalTables
@@ -186,7 +222,7 @@ const dashboardOverview = async (req, res) => {
             staffOnDuty,
             paymentSummary,
 
-            salesGraph,
+            salesGraph: salesGraphFilled,
             topItems
         });
 
