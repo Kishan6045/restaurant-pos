@@ -16,6 +16,7 @@ const dashboardOverview = async (req, res) => {
         const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
 
         // preset supported:
+        // - today, yesterday
         // - 3d, 7d, 10d, 20d, 30d
         // - this_month
         const presetDaysMap = {
@@ -29,7 +30,15 @@ const dashboardOverview = async (req, res) => {
         let start;
         let end;
 
-        if (preset === "this_month") {
+        if (preset === "today") {
+            start = startOfToday;
+            end = endOfToday;
+        } else if (preset === "yesterday") {
+            start = new Date(startOfToday);
+            start.setDate(start.getDate() - 1);
+            end = new Date(endOfToday);
+            end.setDate(end.getDate() - 1);
+        } else if (preset === "this_month") {
             start = startOfThisMonth;
             end = endOfToday;
         } else if (preset && presetDaysMap[preset]) {

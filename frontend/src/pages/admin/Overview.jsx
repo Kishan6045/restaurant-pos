@@ -13,7 +13,7 @@ const Overview = () => {
   const [error, setError] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [preset, setPreset] = useState("7d"); // default: last 7 days
+  const [preset, setPreset] = useState("today"); // default: today
 
   const currency = useMemo(
     () =>
@@ -37,13 +37,11 @@ const Overview = () => {
   };
 
   const presetOptions = [
-    { value: "3d", label: "Last 3 days" },
+    { value: "today", label: "Today" },
+    { value: "yesterday", label: "Yesterday" },
     { value: "7d", label: "Last 7 days" },
-    { value: "10d", label: "Last 10 days" },
-    { value: "20d", label: "Last 20 days" },
-    { value: "30d", label: "Last 30 days" },
-    { value: "this_month", label: "This month" },
-    { value: "custom", label: "Custom range" },
+    { value: "30d", label: "Last 1 month" },
+    { value: "custom", label: "Custom date" },
   ];
 
   // 🔄 Load dashboard data
@@ -82,7 +80,7 @@ const Overview = () => {
   };
 
   useEffect(() => {
-    fetchOverview({ preset: "7d" });
+    fetchOverview({ preset: "today" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
