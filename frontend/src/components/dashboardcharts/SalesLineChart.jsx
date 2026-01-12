@@ -20,7 +20,12 @@ const SalesLineChart = ({ data }) => {
 
   return (
     <>
-      <h3 className="font-semibold mb-3">Sales Trend</h3>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-semibold text-gray-900">Sales Trend</h3>
+        <span className="text-xs text-gray-500">
+          {data.length} points
+        </span>
+      </div>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={data}>
           <XAxis dataKey="date" />
