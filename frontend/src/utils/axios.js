@@ -2,8 +2,8 @@ import axios from "axios";
 import { log, logError } from "./logger"; // console print karava mate
 
 const BASE_URL = import.meta.env.PROD
-    ? import.meta.env.VITE_API_URL   // production
-    : import.meta.env.VITE_LOCAL;    // local
+    ? (import.meta.env.VITE_API_URL || window.location.origin) // production (fallback: same-origin)
+    : (import.meta.env.VITE_LOCAL || "http://localhost:5000"); // local (fallback)
 
 const api = axios.create({
     baseURL: BASE_URL,
