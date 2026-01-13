@@ -1,9 +1,12 @@
 import axios from "axios";
 import { log, logError } from "./logger"; // console print karava mate
 
+const BASE_URL = import.meta.env.PROD
+    ? import.meta.env.VITE_API_URL   // production
+    : import.meta.env.VITE_LOCAL;    // local
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_LOCAL,
+    baseURL: BASE_URL,
 });
 
 let isRefreshing = false;
@@ -87,7 +90,7 @@ api.interceptors.response.use(
             try {
                 //refresh API call
                 const res = await axios.post(
-                    `${import.meta.env.VITE_LOCAL}/api/auth/refresh`,
+                    `${BASE_URL}/api/auth/refresh`,
                     { refreshToken }
                 );
 

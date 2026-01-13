@@ -7,16 +7,16 @@ import {
   ResponsiveContainer,
   Legend
 } from "recharts";
-
+ 
 // 🎨 FIXED COLORS (POS STANDARD)
 const COLOR_MAP = {
   CASH: "#22c55e",   // green
   UPI: "#3b82f6",    // blue
   CARD: "#f97316",   // orange
 };
-
+ 
 const PaymentPieChart = ({ data = {} }) => {
-
+ 
   // 🔄 DATA FORMAT & OPTIMIZATION
   const chartData = useMemo(() => {
     return Object.keys(data)
@@ -26,7 +26,7 @@ const PaymentPieChart = ({ data = {} }) => {
       }))
       .filter((item) => item.value > 0); // ❌ remove zero
   }, [data]);
-
+ 
   // 🚫 NO DATA UI
   if (chartData.length === 0) {
     return (
@@ -35,13 +35,13 @@ const PaymentPieChart = ({ data = {} }) => {
       </div>
     );
   }
-
+ 
   return (
     <div className="bg-white rounded-xl shadow p-4">
       <h3 className="font-semibold text-lg mb-3">
         Payment Methods
       </h3>
-
+ 
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie
@@ -58,12 +58,12 @@ const PaymentPieChart = ({ data = {} }) => {
               />
             ))}
           </Pie>
-
+ 
           {/* 🧾 TOOLTIP */}
           <Tooltip
             formatter={(value) => [`₹${value}`, "Amount"]}
           />
-
+ 
           {/* 📌 LEGEND */}
           <Legend />
         </PieChart>
@@ -71,5 +71,5 @@ const PaymentPieChart = ({ data = {} }) => {
     </div>
   );
 };
-
+ 
 export default PaymentPieChart;

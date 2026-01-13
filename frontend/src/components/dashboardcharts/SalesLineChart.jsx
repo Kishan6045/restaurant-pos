@@ -6,9 +6,9 @@ import {
   Tooltip,
   ResponsiveContainer
 } from "recharts";
-
+ 
 const SalesLineChart = ({ data }) => {
-
+ 
   // ✅ EMPTY DATA GUARD
   if (!data || data.length === 0) {
     return (
@@ -17,7 +17,7 @@ const SalesLineChart = ({ data }) => {
       </div>
     );
   }
-
+ 
   return (
     <>
       <h3 className="font-semibold mb-3">Sales Trend</h3>
@@ -37,5 +37,5 @@ const SalesLineChart = ({ data }) => {
     </>
   );
 };
-
+ 
 export default SalesLineChart;
