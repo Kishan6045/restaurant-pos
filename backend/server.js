@@ -22,19 +22,8 @@ createKitchen();
 
 
 
-// //start server
-// app.listen(PORT,() => {
-//     console.log(chalk.black.bold.bgBlue(` 🚀 Server running on port ${PORT} `)
-// );
-// });
-
-// Start server only in non-production (local/dev)
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => {
-        console.log(chalk.black.bold.bgBlue(` 🚀 Server running on port ${PORT} `));
-    });
-}
-
-
-// Export app for Vercel (serverless)
-module.exports = app;
+//start server
+app.listen(PORT,() => {
+    console.log(chalk.black.bold.bgBlue(` 🚀 Server running on port ${PORT} `)
+);
+});
