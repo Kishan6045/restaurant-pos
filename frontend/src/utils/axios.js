@@ -1,9 +1,16 @@
 import axios from "axios";
 import { log, logError } from "./logger"; // console print karava mate
 
-const BASE_URL = import.meta.env.PROD
-    ? import.meta.env.VITE_API_URL   // production
-    : import.meta.env.VITE_LOCAL;    // local
+const { VITE_API_URL, VITE_LOCAL, PROD, DEV } = import.meta.env;
+const FALLBACK_DEV_URL = "http://localhost:5000";
+
+const BASE_URL = PROD
+    ? VITE_API_URL // production
+    : VITE_LOCAL || VITE_API_URL || (DEV ? FALLBACK_DEV_URL : undefined); // local
+
+if (!BASE_URL) {
+    logError("API BASE_URL missing", { VITE_API_URL, VITE_LOCAL, PROD });
+}
 
 const api = axios.create({
     baseURL: BASE_URL,
