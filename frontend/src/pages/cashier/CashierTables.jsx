@@ -45,31 +45,25 @@ const CashierTables = () => {
         {/* FLOOR FILTER */}
         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-2">
           <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
-            {FLOORS.map((f) => (
-              <button
-                key={f}
-                onClick={() => setFloor(f)}
-                className={`group shrink-0 flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-all
-                  ${floor === f
-                    ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                  }`}
-              >
-                <span
-                  className={`h-2.5 w-2.5 rounded-full border
-                    ${floor === f
-                      ? "bg-white border-white"
-                      : "bg-slate-300 border-slate-300"
+            {FLOORS.map((f) => {
+              const isActive = floor === f;
+              return (
+                <button
+                  key={f}
+                  onClick={() => setFloor(f)}
+                  className={`relative shrink-0 px-3 sm:px-3.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all
+                    ${isActive
+                      ? "bg-white text-slate-900 border border-slate-200 shadow-sm"
+                      : "text-slate-600 hover:text-slate-800"
                     }`}
-                />
-                <span className="whitespace-nowrap">{f}</span>
-                <span className={`hidden sm:inline text-[10px] uppercase tracking-wide
-                  ${floor === f ? "text-white/70" : "text-slate-400"}
-                `}>
-                  Floor
-                </span>
-              </button>
-            ))}
+                >
+                  <span className="whitespace-nowrap">{f}</span>
+                  {isActive && (
+                    <span className="absolute -bottom-0.5 left-1/2 h-1 w-4 -translate-x-1/2 rounded-full bg-slate-900" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
