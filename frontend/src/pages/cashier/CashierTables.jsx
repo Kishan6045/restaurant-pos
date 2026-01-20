@@ -7,6 +7,7 @@ const FLOORS = ["All", "Ground", "First", "Second"];
 const CashierTables = () => {
   const [tables, setTables] = useState([]);
   const [floor, setFloor] = useState("All");
+  const [isFloorPickerOpen, setIsFloorPickerOpen] = useState(false);
   const navigate = useNavigate();
 
   const fetchTables = async () => {
@@ -43,28 +44,49 @@ const CashierTables = () => {
         </div>
 
         {/* FLOOR FILTER */}
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-2">
-          <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
-            {FLOORS.map((f) => {
-              const isActive = floor === f;
-              return (
-                <button
-                  key={f}
-                  onClick={() => setFloor(f)}
-                  className={`relative shrink-0 px-3 sm:px-3.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all
-                    ${isActive
-                      ? "bg-white text-slate-900 border border-slate-200 shadow-sm"
-                      : "text-slate-600 hover:text-slate-800"
-                    }`}
-                >
-                  <span className="whitespace-nowrap">{f}</span>
-                  {isActive && (
-                    <span className="absolute -bottom-0.5 left-1/2 h-1 w-4 -translate-x-1/2 rounded-full bg-slate-900" />
-                  )}
-                </button>
-              );
-            })}
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-700">
+              <span className="h-2 w-2 rounded-full bg-slate-400" />
+              <span className="uppercase tracking-wide text-[10px] sm:text-xs text-slate-400">
+                Floor
+              </span>
+              <span className="font-semibold text-slate-900">{floor}</span>
+            </div>
+            <button
+              onClick={() => setIsFloorPickerOpen((prev) => !prev)}
+              className="text-[11px] sm:text-xs font-semibold text-blue-600 hover:text-blue-700"
+            >
+              {isFloorPickerOpen ? "Hide" : "Change"}
+            </button>
           </div>
+
+          {isFloorPickerOpen && (
+            <div className="mt-3 flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+              {FLOORS.map((f) => {
+                const isActive = floor === f;
+                return (
+                  <button
+                    key={f}
+                    onClick={() => {
+                      setFloor(f);
+                      setIsFloorPickerOpen(false);
+                    }}
+                    className={`relative shrink-0 px-3 sm:px-3.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all
+                      ${isActive
+                        ? "bg-white text-slate-900 border border-slate-200 shadow-sm"
+                        : "text-slate-600 hover:text-slate-800"
+                      }`}
+                  >
+                    <span className="whitespace-nowrap">{f}</span>
+                    {isActive && (
+                      <span className="absolute -bottom-0.5 left-1/2 h-1 w-4 -translate-x-1/2 rounded-full bg-slate-900" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
