@@ -3,6 +3,8 @@ import api from "../utils/axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import Loader from "../components/Loader";
+
 
 
 const Login = () => {

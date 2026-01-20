@@ -1,28 +1,5 @@
-// import { Outlet } from "react-router-dom";
-
-// const CashierLayout = () => {
-//   return (
-//     <div className="h-screen flex flex-col">
-//       <header className="h-14 bg-white border-b flex items-center px-4 font-semibold">
-//         Cashier Panel
-//       </header>
-
-//       <main className="flex-1 p-4 bg-gray-100 overflow-y-auto">
-//         <Outlet />
-//       </main>
-//     </div>
-//   );
-// };
-
-// export default CashierLayout;
-
-
-
-
-
-
 import { Outlet } from "react-router-dom";
- 
+
 const CashierLayout = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100">
@@ -41,12 +18,12 @@ const CashierLayout = () => {
           </div>
         </div>
       </header>
- 
+
       <main className="flex-1 px-3 sm:px-6 py-4 sm:py-6 overflow-y-auto">
         <Outlet />
       </main>
     </div>
   );
 };
- 
+
 export default CashierLayout;

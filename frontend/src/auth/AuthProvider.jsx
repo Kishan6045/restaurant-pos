@@ -1,4 +1,5 @@
 import { createContext, useEffect, useState } from "react";
+import Loader from "../components/Loader";
 
 export const AuthContext = createContext(null);
 
@@ -16,7 +17,7 @@ const AuthProvider = ({ children }) => {
             // <div className="min-h-screen flex items-center justify-center">
             //     <p>Checking session...</p>
             // </div>
-             <Loader
+            <Loader
                 label="Checking session..."
                 containerClassName="min-h-screen bg-gray-50"
             />

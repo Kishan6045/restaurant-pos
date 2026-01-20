@@ -191,7 +191,7 @@ const Categories = () => {
       {/* GRID (ONLY THIS SCROLLS) */}
       <div className="bg-white rounded-xl border shadow-sm p-4 h-[65vh] overflow-y-auto">
         {loading ? (
-         <Loader label="Loading categories..." containerClassName="py-20" />
+          <Loader label="Loading categories..." containerClassName="py-20" />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filtered.map(cat => (
@@ -339,8 +339,8 @@ const Categories = () => {
                     </div>
                     <span
                       className={`text-xs px-2 py-1 rounded-full ${p.isAvailable
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
                         }`}
                     >
                       {p.isAvailable ? "Available" : "Out"}
