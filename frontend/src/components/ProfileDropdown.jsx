@@ -56,7 +56,9 @@ const ProfileDropdown = () => {
       setProfile(res.data.user);
     } catch (error) {
       const message =
-        error.response?.data?.message || "Failed to load profile";
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to load profile";
       setProfileError(message);
     } finally {
       setProfileLoading(false);
