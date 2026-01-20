@@ -58,7 +58,9 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await api.post("/api/auth/login", form);
+      const res = await api.post("/api/auth/login", form, {
+        skipAuthRefresh: true,
+      });
 
       localStorage.setItem("accessToken", res.data.accessToken);
       localStorage.setItem("refreshToken", res.data.refreshToken);
