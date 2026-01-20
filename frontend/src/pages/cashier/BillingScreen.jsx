@@ -142,20 +142,20 @@ const BillingScreen = () => {
     //   </button>
 
     // </div>
-    <div className="max-w-md mx-auto bg-white rounded-xl shadow border p-3 sm:p-4 space-y-3">
+    <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow border p-3 sm:p-5 space-y-3 sm:space-y-4">
 
   {/* ===== HEADER ===== */}
   <div className="flex justify-between items-center border-b pb-2">
     <h2 className="text-sm sm:text-base font-semibold">
       Bill · T-{order.tableId.tableNumber}
     </h2>
-    <span className="text-xs text-gray-500">
+    <span className="text-[11px] sm:text-xs text-gray-500">
       {order.items.length} items
     </span>
   </div>
 
   {/* ===== ITEMS (SCROLLABLE) ===== */}
-  <div className="border rounded-lg divide-y text-xs max-h-48 sm:max-h-56 overflow-y-auto">
+  <div className="border rounded-lg divide-y text-[11px] sm:text-xs max-h-40 sm:max-h-56 overflow-y-auto">
     {order.items.map((i) => (
       <div
         key={i._id}
@@ -180,12 +180,12 @@ const BillingScreen = () => {
   </div>
 
   {/* ===== PAYMENT MODE ===== */}
-  <div className="grid grid-cols-3 gap-1">
+  <div className="grid grid-cols-3 gap-2">
     {["cash", "upi", "card"].map((m) => (
       <button
         key={m}
         onClick={() => setPaymentMethod(m)}
-        className={`py-1.5 rounded-lg border text-xs font-semibold
+        className={`py-2 rounded-lg border text-xs sm:text-sm font-semibold
           ${paymentMethod === m
             ? "bg-black text-white"
             : "bg-white"
@@ -200,7 +200,7 @@ const BillingScreen = () => {
   <button
     onClick={handlePayment}
     disabled={paying}
-    className={`w-full py-2 rounded-lg text-sm font-bold
+    className={`w-full py-2.5 sm:py-3 rounded-lg text-sm font-bold
       ${paying
         ? "bg-gray-400"
         : "bg-green-600 hover:bg-green-700"

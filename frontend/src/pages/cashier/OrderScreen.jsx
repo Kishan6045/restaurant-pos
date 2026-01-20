@@ -725,15 +725,15 @@ const OrderScreen = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-sm border-b border-gray-200 shadow-sm">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center space-x-3 sm:space-x-4">
               <button
                 onClick={() => {
                   if (cart.length > 0 && !window.confirm("Discard current cart?")) return;
                   navigate("/cashier/tables");
                 }}
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+                className="flex items-center space-x-2 text-sm sm:text-base text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <ChevronLeft className="w-5 h-5" />
                 <span className="hidden sm:inline">Tables</span>
@@ -742,8 +742,8 @@ const OrderScreen = () => {
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-8 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full"></div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-800">Table {tableId}</h1>
-                  <p className="text-sm text-gray-500">Restaurant Order System</p>
+                  <h1 className="text-lg sm:text-xl font-bold text-gray-800">Table {tableId}</h1>
+                  <p className="hidden sm:block text-sm text-gray-500">Restaurant Order System</p>
                 </div>
               </div>
             </div>
@@ -751,11 +751,11 @@ const OrderScreen = () => {
             {/* Cart Button for Mobile */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative p-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all lg:hidden"
+              className="relative p-2.5 sm:p-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all lg:hidden"
             >
-              <ShoppingBag className="w-6 h-6" />
+              <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] sm:text-xs font-bold rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
                   {cartItemCount}
                 </span>
               )}
@@ -782,18 +782,18 @@ const OrderScreen = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
           {/* Left Column - Categories & Products */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className="lg:col-span-8 space-y-4 sm:space-y-6">
             {/* Categories Tabs */}
-            <div className="bg-white rounded-2xl shadow-lg p-4">
-              <div className="flex flex-wrap gap-2">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-3 sm:p-4">
+              <div className="flex flex-nowrap sm:flex-wrap gap-2 overflow-x-auto sm:overflow-visible pb-1 -mx-1 px-1">
                 {categories.map((c) => (
                   <button
                     key={c._id}
                     onClick={() => setActiveCat(c._id)}
-                    className={`px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
+                    className={`shrink-0 whitespace-nowrap px-3 sm:px-4 py-2 sm:py-3 rounded-xl text-sm sm:text-base font-medium transition-all duration-300 ${
                       activeCat === c._id
                         ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg transform scale-105"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
@@ -806,25 +806,25 @@ const OrderScreen = () => {
             </div>
 
             {/* Products Grid */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">
                 Menu Items
-                <span className="ml-2 text-sm font-normal text-gray-500">
+                <span className="ml-2 text-xs sm:text-sm font-normal text-gray-500">
                   ({filteredProducts.length} items)
                 </span>
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                 {filteredProducts.map((p) => {
                   const inCart = cart.find((i) => i._id === p._id);
                   return (
                     <div
                       key={p._id}
                       onClick={() => addToCart(p)}
-                      className="group relative bg-white border border-gray-200 rounded-2xl p-4 cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                      className="group relative bg-white border border-gray-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                     >
                       {/* Product Image */}
-                      <div className="relative h-40 mb-4 rounded-xl overflow-hidden">
+                      <div className="relative h-28 sm:h-36 lg:h-40 mb-3 sm:mb-4 rounded-lg sm:rounded-xl overflow-hidden">
                         <img
                           src={p.image || "/no-image.png"}
                           alt={p.name}
@@ -832,7 +832,7 @@ const OrderScreen = () => {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                         {inCart && (
-                          <div className="absolute top-3 right-3 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg">
+                          <div className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs sm:text-sm font-bold px-2.5 sm:px-3 py-1 rounded-full shadow-lg">
                             {inCart.qty} in cart
                           </div>
                         )}
@@ -840,15 +840,15 @@ const OrderScreen = () => {
 
                       {/* Product Info */}
                       <div>
-                        <h3 className="font-bold text-gray-800 mb-1 truncate">{p.name}</h3>
-                        <p className="text-gray-600 text-sm mb-3 line-clamp-2 h-10">
+                        <h3 className="text-sm sm:text-base font-bold text-gray-800 mb-1 truncate">{p.name}</h3>
+                        <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2 h-9 sm:h-10">
                           {p.description || "Delicious item"}
                         </p>
                         <div className="flex items-center justify-between">
-                          <span className="text-xl font-bold text-orange-600">
+                          <span className="text-lg sm:text-xl font-bold text-orange-600">
                             ₹{p.price}
                           </span>
-                          <button className="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all hover:scale-105">
+                          <button className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all hover:scale-105">
                             Add +
                           </button>
                         </div>
@@ -1057,11 +1057,11 @@ const OrderScreen = () => {
           />
           
           {/* Cart Drawer */}
-          <div className="fixed bottom-0 left-0 right-0 h-[85vh] bg-white rounded-t-3xl shadow-2xl overflow-hidden animate-slideUp">
+          <div className="fixed bottom-0 left-0 right-0 h-[90vh] bg-white rounded-t-2xl sm:rounded-t-3xl shadow-2xl overflow-hidden animate-slideUp">
             {/* Header */}
-            <div className="p-6 border-b border-gray-200">
+            <div className="p-4 sm:p-6 border-b border-gray-200">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-bold text-gray-800">Your Order</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-800">Your Order</h3>
                 <button
                   onClick={() => setIsCartOpen(false)}
                   className="p-2 hover:bg-gray-100 rounded-lg"
@@ -1072,9 +1072,9 @@ const OrderScreen = () => {
               
               {/* Mobile Status */}
               {existingOrder && (
-                <div className="flex items-center space-x-2 px-4 py-3 bg-yellow-50 rounded-xl">
+                <div className="flex items-center space-x-2 px-3 py-2.5 bg-yellow-50 rounded-xl">
                   <Clock className="w-5 h-5 text-yellow-600" />
-                  <span className="text-sm font-medium text-yellow-700">
+                  <span className="text-xs sm:text-sm font-medium text-yellow-700">
                     Active order in progress
                   </span>
                 </div>
@@ -1082,7 +1082,7 @@ const OrderScreen = () => {
             </div>
 
             {/* Cart Items */}
-            <div className="p-4 h-[calc(85vh-200px)] overflow-y-auto">
+            <div className="p-3 sm:p-4 h-[calc(90vh-200px)] overflow-y-auto">
               {cart.length === 0 ? (
                 <div className="text-center py-12">
                   <ShoppingBag className="w-20 h-20 text-gray-300 mx-auto mb-4" />
@@ -1094,15 +1094,15 @@ const OrderScreen = () => {
                   {cart.map((i) => (
                     <div
                       key={i._id}
-                      className="bg-gray-50 rounded-xl p-4 border border-gray-200"
+                      className="bg-gray-50 rounded-xl p-3 sm:p-4 border border-gray-200"
                     >
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h4 className="font-bold text-gray-800">{i.name}</h4>
-                          <p className="text-gray-600">₹{i.price} each</p>
+                          <h4 className="text-sm sm:text-base font-bold text-gray-800">{i.name}</h4>
+                          <p className="text-xs sm:text-sm text-gray-600">₹{i.price} each</p>
                         </div>
                         <div className="flex items-center space-x-3">
-                          <div className="flex items-center space-x-3 bg-white rounded-lg px-3 py-1 border">
+                          <div className="flex items-center space-x-3 bg-white rounded-lg px-2.5 py-1 border">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1127,7 +1127,7 @@ const OrderScreen = () => {
                           </div>
                           <button
                             onClick={() => removeItem(i._id)}
-                            className="text-red-500 p-2"
+                            className="text-red-500 p-1.5"
                           >
                             <Trash2 className="w-5 h-5" />
                           </button>
@@ -1146,16 +1146,16 @@ const OrderScreen = () => {
 
             {/* Mobile Cart Footer */}
             {cart.length > 0 && (
-              <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-6">
+              <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 sm:p-6">
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <p className="text-gray-600">Total Amount</p>
-                    <p className="text-2xl font-bold text-gray-800">₹{(total * 0.95).toFixed(2)}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-800">₹{(total * 0.95).toFixed(2)}</p>
                   </div>
                   <button
                     onClick={sendToKitchen}
                     disabled={sending}
-                    className="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50"
+                    className="px-5 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50"
                   >
                     {sending ? "Sending..." : "Confirm Order"}
                   </button>
@@ -1170,11 +1170,11 @@ const OrderScreen = () => {
       {cart.length > 0 && !isCartOpen && (
         <button
           onClick={() => setIsCartOpen(true)}
-          className="fixed bottom-6 right-6 lg:hidden z-40 p-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full shadow-2xl hover:shadow-3xl hover:scale-110 transition-all animate-bounce-subtle"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 lg:hidden z-40 p-3 sm:p-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full shadow-2xl hover:shadow-3xl hover:scale-110 transition-all animate-bounce-subtle"
         >
           <div className="relative">
-            <ShoppingBag className="w-8 h-8" />
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+            <ShoppingBag className="w-7 h-7 sm:w-8 sm:h-8" />
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] sm:text-xs font-bold rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
               {cartItemCount}
             </span>
           </div>
