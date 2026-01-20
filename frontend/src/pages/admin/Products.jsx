@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import api from "../../utils/axios";
-import { Trash2, Pencil, Loader2, X } from "lucide-react";
+import { Trash2, Pencil, X } from "lucide-react";
 import { toast } from "react-toastify";
+import Loader from "../../components/Loader";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -258,8 +259,8 @@ const Products = () => {
               {loading ? (
                 <tr>
                   <td colSpan="6" className="text-center py-10">
-                    <Loader2 className="animate-spin inline" />
-                  </td>
+                    <Loader label="Loading products..." />                
+                      </td>
                 </tr>
               ) : filteredProducts.map(p => (
                 <tr key={p._id} className="border-t hover:bg-gray-50">

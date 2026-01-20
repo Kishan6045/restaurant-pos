@@ -1,17 +1,52 @@
-import { Outlet } from "react-router-dom";
+// import { Outlet } from "react-router-dom";
 
+// const CashierLayout = () => {
+//   return (
+//     <div className="h-screen flex flex-col">
+//       <header className="h-14 bg-white border-b flex items-center px-4 font-semibold">
+//         Cashier Panel
+//       </header>
+
+//       <main className="flex-1 p-4 bg-gray-100 overflow-y-auto">
+//         <Outlet />
+//       </main>
+//     </div>
+//   );
+// };
+
+// export default CashierLayout;
+
+
+
+
+
+
+import { Outlet } from "react-router-dom";
+ 
 const CashierLayout = () => {
   return (
-    <div className="h-screen flex flex-col">
-      <header className="h-14 bg-white border-b flex items-center px-4 font-semibold">
-        Cashier Panel
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100">
+      <header className="sticky top-0 z-30">
+        <div className="bg-white/90 backdrop-blur border-b border-slate-200">
+          <div className="mx-auto w-full max-w-7xl h-12 sm:h-14 px-3 sm:px-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="h-8 w-1.5 rounded-full bg-gradient-to-b from-orange-500 to-orange-600" />
+              <span className="text-sm sm:text-base font-semibold text-slate-900">
+                Cashier Panel
+              </span>
+            </div>
+            <span className="hidden sm:block text-xs text-slate-500">
+              POS Console
+            </span>
+          </div>
+        </div>
       </header>
-
-      <main className="flex-1 p-4 bg-gray-100 overflow-y-auto">
+ 
+      <main className="flex-1 px-3 sm:px-6 py-4 sm:py-6 overflow-y-auto">
         <Outlet />
       </main>
     </div>
   );
 };
-
+ 
 export default CashierLayout;

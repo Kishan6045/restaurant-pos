@@ -13,9 +13,13 @@ const AuthProvider = ({ children }) => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <p>Checking session...</p>
-            </div>
+            // <div className="min-h-screen flex items-center justify-center">
+            //     <p>Checking session...</p>
+            // </div>
+             <Loader
+                label="Checking session..."
+                containerClassName="min-h-screen bg-gray-50"
+            />
         );
     }
 

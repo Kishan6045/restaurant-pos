@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../utils/axios";
+import Loader from "../../components/Loader";
+
 
 const STATUS_COLOR = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -43,8 +45,9 @@ const LiveOrders = () => {
     return () => clearInterval(t);
   }, []);
 
-  if (loading) return <div className="p-6">Loading...</div>;
-  if (orders.length === 0)
+if (loading) {
+    return <Loader label="Loading live orders..." containerClassName="p-6" />;
+  }  if (orders.length === 0)
     return <div className="p-6">No live orders</div>;
 
   return (

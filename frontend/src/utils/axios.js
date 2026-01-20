@@ -58,9 +58,12 @@ api.interceptors.response.use(
         });
 
         const originalRequest = error.config;
+        const shouldSkipAuthRefresh =
+            originalRequest?.skipAuthRefresh ||
+            originalRequest?.url?.includes("/api/auth/login");
 
         // Agar access token expire ho gaya ho
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 && !originalRequest._retry && !shouldSkipAuthRefresh) {
             originalRequest._retry = true;
 
             const refreshToken = localStorage.getItem("refreshToken");

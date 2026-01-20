@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import api from "../../utils/axios";
-import { Plus, Pencil, Trash2, Loader2, X } from "lucide-react";
+import { Plus, Pencil, Trash2,  X } from "lucide-react";
 import { toast } from "react-toastify";
+import Loader from "../../components/Loader";
+
 
 const FLOORS = ["Ground", "First", "Second"];
 
@@ -137,9 +139,7 @@ const Tables = () => {
 
       {/* TABLE GRID */}
       {loading ? (
-        <div className="flex justify-center py-10">
-          <Loader2 className="animate-spin" />
-        </div>
+        <Loader label="Loading tables..." containerClassName="py-10" />
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {filteredTables.map((table) => (
