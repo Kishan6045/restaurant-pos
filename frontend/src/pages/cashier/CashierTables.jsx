@@ -3,10 +3,15 @@ import api from "../../utils/axios";
 import { useNavigate } from "react-router-dom";
 
 const FLOORS = ["All", "Ground", "First", "Second"];
+const FLOOR_STORAGE_KEY = "cashier:selectedFloor";
 
 const CashierTables = () => {
   const [tables, setTables] = useState([]);
-  const [floor, setFloor] = useState("All");
+  const [floor, setFloor] = useState(() => {
+    if (typeof window === "undefined") return "All";
+    const saved = window.localStorage.getItem(FLOOR_STORAGE_KEY);
+    return FLOORS.includes(saved) ? saved : "All";
+  });
   const [isFloorPickerOpen, setIsFloorPickerOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -18,6 +23,12 @@ const CashierTables = () => {
   useEffect(() => {
     fetchTables();
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(FLOOR_STORAGE_KEY, floor);
+    }
+  }, [floor]);
 
   const filteredTables =
     floor === "All"
