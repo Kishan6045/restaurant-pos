@@ -8,6 +8,7 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [form, setForm] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true); // page load check
 
@@ -193,15 +194,22 @@ const Login = () => {
                       🔒
                     </span>
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       name="password"
                       value={form.password}
                       onChange={handleChange}
                       placeholder="••••••••"
                       autoComplete="current-password"
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-11 pr-4 text-sm text-gray-800 placeholder-gray-400 shadow-sm transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100"
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-11 pr-16 text-sm text-gray-800 placeholder-gray-400 shadow-sm transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100"
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-xs font-semibold text-blue-600 transition hover:bg-blue-50 hover:text-blue-700"
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
                   </div>
                 </div>
 
