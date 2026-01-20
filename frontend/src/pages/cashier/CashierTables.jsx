@@ -24,30 +24,40 @@ const CashierTables = () => {
       : tables.filter((t) => t.floor === floor);
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* HEADER */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-xl sm:text-2xl font-semibold">Select Table</h2>
-        <span className="text-xs sm:text-sm text-gray-500">
-          {filteredTables.length} Tables
-        </span>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      {/* HEADER + FILTERS */}
+      <div className="rounded-2xl bg-white shadow-sm border border-slate-200 p-4 sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[11px] sm:text-xs uppercase tracking-wide text-slate-400">
+              Tables
+            </p>
+            <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">
+              Select Table
+            </h2>
+          </div>
+          <div className="inline-flex items-center gap-2 text-xs sm:text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-full px-3 py-1">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            {filteredTables.length} Tables
+          </div>
+        </div>
 
-      {/* FLOOR FILTER */}
-      <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
-        {FLOORS.map((f) => (
-          <button
-            key={f}
-            onClick={() => setFloor(f)}
-            className={`shrink-0 whitespace-nowrap px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm border
-              ${floor === f
-                ? "bg-black text-white"
-                : "bg-white hover:bg-gray-100"
-              }`}
-          >
-            {f}
-          </button>
-        ))}
+        {/* FLOOR FILTER */}
+        <div className="mt-4 flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+          {FLOORS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setFloor(f)}
+              className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold border transition-all
+                ${floor === f
+                  ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* TABLE GRID */}
@@ -56,26 +66,35 @@ const CashierTables = () => {
           <div
             key={t._id}
             onClick={() => navigate(`/cashier/table/${t._id}`)}
-            className={`cursor-pointer rounded-xl p-3 sm:p-4 shadow-sm border
-              transition hover:shadow-md
+            className={`group relative cursor-pointer rounded-2xl p-3 sm:p-4 border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg
               ${t.status === "available"
-                ? "bg-green-50 border-green-300"
-                : "bg-red-50 border-red-300"
+                ? "bg-gradient-to-br from-emerald-50 via-white to-emerald-100 border-emerald-200"
+                : "bg-gradient-to-br from-rose-50 via-white to-rose-100 border-rose-200"
               }`}
           >
-            <div className="text-lg sm:text-xl font-bold text-center">
-              T-{t.tableNumber}
+            <div className="flex items-center justify-between text-[10px] sm:text-xs text-slate-500">
+              <span className="inline-flex items-center gap-1">
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    t.status === "available" ? "bg-emerald-500" : "bg-rose-500"
+                  }`}
+                />
+                {t.status.toUpperCase()}
+              </span>
+              <span>{t.floor} Floor</span>
             </div>
 
-            <div className="text-[11px] sm:text-xs text-center text-gray-500 mt-1">
-              {t.floor} Floor
+            <div className="mt-3 flex items-center justify-center">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/90 border border-slate-200 shadow-sm flex items-center justify-center text-lg sm:text-xl font-bold text-slate-900">
+                T-{t.tableNumber}
+              </div>
             </div>
 
             <div
-              className={`mt-3 text-center text-xs sm:text-sm font-medium px-2 py-1 rounded-full
+              className={`mt-3 text-center text-xs sm:text-sm font-semibold px-2 py-1 rounded-full
                 ${t.status === "available"
-                  ? "bg-green-600 text-white"
-                  : "bg-red-600 text-white"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-rose-600 text-white"
                 }`}
             >
               {t.status.toUpperCase()}

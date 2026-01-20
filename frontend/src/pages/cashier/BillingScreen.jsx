@@ -142,74 +142,83 @@ const BillingScreen = () => {
     //   </button>
 
     // </div>
-    <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow border p-3 sm:p-5 space-y-3 sm:space-y-4">
+    <div className="w-full max-w-md mx-auto">
+      <div className="rounded-3xl border border-slate-200 bg-white shadow-xl overflow-hidden">
+        {/* ===== HEADER ===== */}
+        <div className="px-4 sm:px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-slate-50">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[11px] sm:text-xs uppercase tracking-wide text-slate-400">
+                Billing
+              </p>
+              <h2 className="text-base sm:text-lg font-semibold text-slate-900">
+                Table T-{order.tableId.tableNumber}
+              </h2>
+            </div>
+            <span className="text-[11px] sm:text-xs text-slate-500">
+              {order.items.length} items
+            </span>
+          </div>
+        </div>
 
-  {/* ===== HEADER ===== */}
-  <div className="flex justify-between items-center border-b pb-2">
-    <h2 className="text-sm sm:text-base font-semibold">
-      Bill · T-{order.tableId.tableNumber}
-    </h2>
-    <span className="text-[11px] sm:text-xs text-gray-500">
-      {order.items.length} items
-    </span>
-  </div>
+        <div className="p-4 sm:p-6 space-y-4">
+          {/* ===== ITEMS (SCROLLABLE) ===== */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/60 divide-y text-[11px] sm:text-xs max-h-44 sm:max-h-60 overflow-y-auto">
+            {order.items.map((i) => (
+              <div
+                key={i._id}
+                className="flex justify-between px-3 py-2"
+              >
+                <span className="truncate max-w-[65%] text-slate-700">
+                  {i.name} × {i.quantity}
+                </span>
+                <span className="font-semibold text-slate-900">
+                  ₹{i.price * i.quantity}
+                </span>
+              </div>
+            ))}
+          </div>
 
-  {/* ===== ITEMS (SCROLLABLE) ===== */}
-  <div className="border rounded-lg divide-y text-[11px] sm:text-xs max-h-40 sm:max-h-56 overflow-y-auto">
-    {order.items.map((i) => (
-      <div
-        key={i._id}
-        className="flex justify-between px-2 py-1.5"
-      >
-        <span className="truncate max-w-[65%]">
-          {i.name} × {i.quantity}
-        </span>
-        <span className="font-medium">
-          ₹{i.price * i.quantity}
-        </span>
+          {/* ===== TOTAL ===== */}
+          <div className="flex justify-between items-center rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-white px-4 py-3 text-sm font-semibold">
+            <span className="text-slate-700">Total Amount</span>
+            <span className="text-emerald-600 text-base sm:text-lg">
+              ₹{order.totalAmount}
+            </span>
+          </div>
+
+          {/* ===== PAYMENT MODE ===== */}
+          <div className="grid grid-cols-3 gap-2">
+            {["cash", "upi", "card"].map((m) => (
+              <button
+                key={m}
+                onClick={() => setPaymentMethod(m)}
+                className={`py-2.5 rounded-xl border text-xs sm:text-sm font-semibold transition-all
+                  ${paymentMethod === m
+                    ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                  }`}
+              >
+                {m.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          {/* ===== PAY BUTTON ===== */}
+          <button
+            onClick={handlePayment}
+            disabled={paying}
+            className={`w-full py-3 sm:py-3.5 rounded-2xl text-sm sm:text-base font-bold transition-all
+              ${paying
+                ? "bg-slate-300"
+                : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
+              } text-white`}
+          >
+            {paying ? "Processing..." : "PAY & CLOSE"}
+          </button>
+        </div>
       </div>
-    ))}
-  </div>
-
-  {/* ===== TOTAL ===== */}
-  <div className="flex justify-between items-center bg-gray-50 border rounded-lg px-3 py-2 text-sm font-semibold">
-    <span>Total</span>
-    <span className="text-green-600">
-      ₹{order.totalAmount}
-    </span>
-  </div>
-
-  {/* ===== PAYMENT MODE ===== */}
-  <div className="grid grid-cols-3 gap-2">
-    {["cash", "upi", "card"].map((m) => (
-      <button
-        key={m}
-        onClick={() => setPaymentMethod(m)}
-        className={`py-2 rounded-lg border text-xs sm:text-sm font-semibold
-          ${paymentMethod === m
-            ? "bg-black text-white"
-            : "bg-white"
-          }`}
-      >
-        {m.toUpperCase()}
-      </button>
-    ))}
-  </div>
-
-  {/* ===== PAY BUTTON ===== */}
-  <button
-    onClick={handlePayment}
-    disabled={paying}
-    className={`w-full py-2.5 sm:py-3 rounded-lg text-sm font-bold
-      ${paying
-        ? "bg-gray-400"
-        : "bg-green-600 hover:bg-green-700"
-      } text-white`}
-  >
-    {paying ? "Processing..." : "PAY & CLOSE"}
-  </button>
-
-</div>
+    </div>
 
   );
 };
