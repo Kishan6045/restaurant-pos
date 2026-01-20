@@ -825,44 +825,48 @@ const OrderScreen = () => {
           {/* Left Column - Categories & Products */}
           <div className="lg:col-span-8 space-y-4 sm:space-y-6">
             {/* Categories Tabs */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3 sm:p-4">
-              <div className="flex flex-nowrap sm:flex-wrap gap-2 overflow-x-auto sm:overflow-visible pb-1 -mx-1 px-1">
-                {categories.map((c) => (
-                  <button
-                    key={c._id}
-                    onClick={() => setActiveCat(c._id)}
-                    className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 sm:py-3 rounded-full text-sm sm:text-base font-semibold border transition-all duration-300 ${
-                      activeCat === c._id
-                        ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white border-orange-500 shadow-sm"
-                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                    }`}
-                  >
-                    {c.name}
-                  </button>
-                ))}
+            <div className="sticky top-14 sm:top-16 z-20 bg-white/95 backdrop-blur rounded-2xl border border-slate-200 shadow-sm p-2 sm:p-3">
+              <div className="relative">
+                <div className="flex flex-nowrap gap-2 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-1 -mx-1 px-1">
+                  {categories.map((c) => (
+                    <button
+                      key={c._id}
+                      onClick={() => setActiveCat(c._id)}
+                      className={`shrink-0 snap-start whitespace-nowrap px-3 sm:px-4 py-1.5 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold border transition-all duration-300 ${
+                        activeCat === c._id
+                          ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white border-orange-500 shadow-sm"
+                          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-5 bg-gradient-to-r from-white via-white/80 to-transparent rounded-l-2xl" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-5 bg-gradient-to-l from-white via-white/80 to-transparent rounded-r-2xl" />
               </div>
             </div>
 
             {/* Products Grid */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 sm:mb-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3 sm:p-6">
+              <h2 className="text-lg sm:text-2xl font-bold text-slate-900 mb-3 sm:mb-6">
                 Menu Items
                 <span className="ml-2 text-xs sm:text-sm font-normal text-slate-500">
                   ({filteredProducts.length} items)
                 </span>
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-4">
                 {filteredProducts.map((p) => {
                   const inCart = cart.find((i) => i._id === p._id);
                   return (
                     <div
                       key={p._id}
                       onClick={() => addToCart(p)}
-                      className="group relative bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                      className="group relative bg-white border border-slate-200 rounded-2xl p-2.5 sm:p-4 cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                     >
                       {/* Product Image */}
-                      <div className="relative h-28 sm:h-36 lg:h-40 mb-3 sm:mb-4 rounded-xl overflow-hidden">
+                      <div className="relative h-20 sm:h-28 lg:h-32 mb-2 sm:mb-3 rounded-xl overflow-hidden">
                         <img
                           src={p.image || "/no-image.png"}
                           alt={p.name}
@@ -870,7 +874,7 @@ const OrderScreen = () => {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                         {inCart && (
-                          <div className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs sm:text-sm font-bold px-2.5 sm:px-3 py-1 rounded-full shadow-lg">
+                          <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full shadow-lg">
                             {inCart.qty} in cart
                           </div>
                         )}
@@ -878,15 +882,15 @@ const OrderScreen = () => {
 
                       {/* Product Info */}
                       <div>
-                        <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-1 truncate">{p.name}</h3>
-                        <p className="text-slate-500 text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2 h-9 sm:h-10">
+                        <h3 className="text-xs sm:text-sm font-semibold text-slate-900 mb-1 truncate">{p.name}</h3>
+                        <p className="hidden sm:block text-slate-500 text-xs mb-2 line-clamp-2 h-8">
                           {p.description || "Delicious item"}
                         </p>
                         <div className="flex items-center justify-between">
-                          <span className="text-lg sm:text-xl font-bold text-orange-600">
+                          <span className="text-sm sm:text-base font-bold text-orange-600">
                             ₹{p.price}
                           </span>
-                          <button className="px-3.5 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-full shadow-sm hover:shadow-lg transition-all hover:scale-105">
+                          <button className="px-2.5 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-full shadow-sm hover:shadow-lg transition-all hover:scale-105">
                             Add +
                           </button>
                         </div>
