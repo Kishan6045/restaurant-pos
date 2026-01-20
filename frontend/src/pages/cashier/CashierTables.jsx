@@ -61,46 +61,58 @@ const CashierTables = () => {
       </div>
 
       {/* TABLE GRID */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-        {filteredTables.map((t) => (
-          <div
-            key={t._id}
-            onClick={() => navigate(`/cashier/table/${t._id}`)}
-            className={`group relative cursor-pointer rounded-2xl p-3 sm:p-4 border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg
-              ${t.status === "available"
-                ? "bg-gradient-to-br from-emerald-50 via-white to-emerald-100 border-emerald-200"
-                : "bg-gradient-to-br from-rose-50 via-white to-rose-100 border-rose-200"
-              }`}
-          >
-            <div className="flex items-center justify-between text-[10px] sm:text-xs text-slate-500">
-              <span className="inline-flex items-center gap-1">
-                <span
-                  className={`h-2 w-2 rounded-full ${
-                    t.status === "available" ? "bg-emerald-500" : "bg-rose-500"
-                  }`}
-                />
-                {t.status.toUpperCase()}
-              </span>
-              <span>{t.floor} Floor</span>
-            </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+        {filteredTables.map((t) => {
+          const isAvailable = t.status === "available";
+          return (
+            <div
+              key={t._id}
+              onClick={() => navigate(`/cashier/table/${t._id}`)}
+              className={`group relative cursor-pointer rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg bg-white
+                ${isAvailable ? "border-emerald-200" : "border-rose-200"}
+              `}
+            >
+              {/* Top Bar */}
+              <div className={`flex items-center justify-between px-3 py-2 border-b
+                ${isAvailable ? "bg-emerald-50 border-emerald-100" : "bg-rose-50 border-rose-100"}
+              `}>
+                <div className="flex items-center gap-2 text-[10px] sm:text-xs font-semibold text-slate-700">
+                  <span className={`h-2 w-2 rounded-full ${isAvailable ? "bg-emerald-500" : "bg-rose-500"}`} />
+                  {isAvailable ? "AVAILABLE" : "OCCUPIED"}
+                </div>
+                <div className="text-[10px] sm:text-xs text-slate-500">
+                  {t.floor} Floor
+                </div>
+              </div>
 
-            <div className="mt-3 flex items-center justify-center">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/90 border border-slate-200 shadow-sm flex items-center justify-center text-lg sm:text-xl font-bold text-slate-900">
-                T-{t.tableNumber}
+              {/* Table Body */}
+              <div className="p-3 sm:p-4">
+                <div className="flex items-center justify-center">
+                  <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 flex items-center justify-center text-lg sm:text-2xl font-bold
+                    ${isAvailable ? "border-emerald-200 text-emerald-700 bg-emerald-50" : "border-rose-200 text-rose-700 bg-rose-50"}
+                  `}>
+                    T-{t.tableNumber}
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between text-[11px] sm:text-xs text-slate-500">
+                  <span className="uppercase tracking-wide">Table</span>
+                  <span className="font-semibold text-slate-700">
+                    {isAvailable ? "Ready" : "In Use"}
+                  </span>
+                </div>
+
+                <div
+                  className={`mt-3 w-full text-center text-xs sm:text-sm font-semibold py-1.5 rounded-xl
+                    ${isAvailable ? "bg-emerald-600 text-white" : "bg-rose-600 text-white"}
+                  `}
+                >
+                  {isAvailable ? "START ORDER" : "VIEW ORDER"}
+                </div>
               </div>
             </div>
-
-            <div
-              className={`mt-3 text-center text-xs sm:text-sm font-semibold px-2 py-1 rounded-full
-                ${t.status === "available"
-                  ? "bg-emerald-600 text-white"
-                  : "bg-rose-600 text-white"
-                }`}
-            >
-              {t.status.toUpperCase()}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
