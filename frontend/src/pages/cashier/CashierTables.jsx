@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../utils/axios";
 import { useNavigate } from "react-router-dom";
+import { LogOut } from "lucide-react";
 
 const FLOORS = ["All", "Ground", "First", "Second"];
 const FLOOR_STORAGE_KEY = "cashier:selectedFloor";
@@ -48,9 +49,21 @@ const CashierTables = () => {
               Select Table
             </h2>
           </div>
-          <div className="inline-flex items-center gap-2 text-xs sm:text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-full px-3 py-1">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            {filteredTables.length} Tables
+          <div className="flex items-center gap-2">
+            <div className="inline-flex items-center gap-2 text-xs sm:text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-full px-3 py-1">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              {filteredTables.length} Tables
+            </div>
+            <button
+              onClick={() => {
+                localStorage.clear();
+                window.location.href = "/login";
+              }}
+              className="h-7 w-7 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition"
+              aria-label="Log out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
