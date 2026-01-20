@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import api from "../../utils/axios";
 import { Pencil, Trash2, X } from "lucide-react";
 import { toast } from "react-toastify";
+import Loader from "../../components/Loader";
 import {
   useReactTable,
   getCoreRowModel,
@@ -216,51 +217,59 @@ const Staff = () => {
 
         {/* TABLE DESKTOP */}
         <div className="hidden md:block bg-white rounded shadow overflow-x-auto">
-          <div className="max-h-[360px] overflow-y-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                {table.getHeaderGroups().map(hg => (
-                  <tr key={hg.id}>
-                    {hg.headers.map(h => (
-                      <th key={h.id} className="p-3 text-left">
-                        {flexRender(h.column.columnDef.header, h.getContext())}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {table.getRowModel().rows.map(row => (
-                  <tr key={row.id} className="border-t">
-                    {row.getVisibleCells().map(cell => (
-                      <td key={cell.id} className="p-3">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {loading ? (
+            <Loader label="Loading staff..." containerClassName="py-10" />
+          ) : (
+            <div className="max-h-[360px] overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  {table.getHeaderGroups().map(hg => (
+                    <tr key={hg.id}>
+                      {hg.headers.map(h => (
+                        <th key={h.id} className="p-3 text-left">
+                          {flexRender(h.column.columnDef.header, h.getContext())}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody>
+                  {table.getRowModel().rows.map(row => (
+                    <tr key={row.id} className="border-t">
+                      {row.getVisibleCells().map(cell => (
+                        <td key={cell.id} className="p-3">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* MOBILE CARDS */}
         <div className="md:hidden space-y-2">
-          {filteredStaff.map(s => (
-            <div key={s._id} className="bg-white p-3 rounded shadow">
-              <div className="font-semibold">{s.name}</div>
-              <div className="text-xs text-gray-500">{s.email}</div>
-              <div className="mt-2 flex justify-between items-center">
-                <span className="text-xs">
-                  {s.isActive ? "Active" : "Inactive"}
-                </span>
-                <div className="flex gap-3">
-                  <Pencil size={16} onClick={() => setEditStaff({ ...s, password: "" })} />
-                  <Trash2 size={16} onClick={() => toggleStatus(s._id, s.isActive)} />
+          {loading ? (
+            <Loader label="Loading staff..." containerClassName="py-6" />
+          ) : (
+            filteredStaff.map(s => (
+              <div key={s._id} className="bg-white p-3 rounded shadow">
+                <div className="font-semibold">{s.name}</div>
+                <div className="text-xs text-gray-500">{s.email}</div>
+                <div className="mt-2 flex justify-between items-center">
+                  <span className="text-xs">
+                    {s.isActive ? "Active" : "Inactive"}
+                  </span>
+                  <div className="flex gap-3">
+                    <Pencil size={16} onClick={() => setEditStaff({ ...s, password: "" })} />
+                    <Trash2 size={16} onClick={() => toggleStatus(s._id, s.isActive)} />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../utils/axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
+import Loader from "../components/Loader";
 
 
 const Login = () => {
@@ -39,12 +40,11 @@ const Login = () => {
   // 🔄 Loader while checking session
   if (checkingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600 text-sm">Checking session...</p>
-        </div>
-      </div>
+      <Loader
+        label="Checking session..."
+        containerClassName="min-h-screen bg-gray-100"
+        spinnerClassName="text-blue-600"
+      />
     );
   }
 

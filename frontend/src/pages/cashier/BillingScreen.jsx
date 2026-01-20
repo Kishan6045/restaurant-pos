@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../utils/axios";
+import Loader from "../../components/Loader";
 
 const BillingScreen = () => {
   const { tableId } = useParams();
@@ -56,7 +57,7 @@ const BillingScreen = () => {
   };
 
   if (loading) {
-    return <div className="p-6">Loading...</div>;
+    return <Loader label="Loading bill..." containerClassName="p-6" />;
   }
 
   if (!order) {

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import api from "../../utils/axios";
+import Loader from "../../components/Loader";
 
 const Reports = () => {
   const [type, setType] = useState("daily");
@@ -81,8 +82,8 @@ const Reports = () => {
 
         {/* LOADING */}
         {loading && (
-          <div className="bg-white p-3 rounded shadow-sm text-sm text-center">
-            Loading...
+          <div className="bg-white p-3 rounded shadow-sm">
+            <Loader label="Loading report..." containerClassName="py-6" />
           </div>
         )}
 

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../../utils/axios";
+import Loader from "../../components/Loader";
 
 // Dashboard components
 import StatCard from "../../components/dashboardcharts/StatCard.jsx";
@@ -106,9 +107,10 @@ const Overview = () => {
 
   if (loading) {
     return (
-      <div className="h-[60vh] flex items-center justify-center text-gray-400">
-        Loading dashboard...
-      </div>
+      <Loader
+        label="Loading dashboard..."
+        containerClassName="h-[60vh] text-gray-400"
+      />
     );
   }
 

@@ -4,12 +4,12 @@ import {
   Plus,
   Pencil,
   Trash2,
-  Loader2,
   X,
   Eye,
   MoreVertical
 } from "lucide-react";
 import { toast } from "react-toastify";
+import Loader from "../../components/Loader";
 
 const CUISINES = ["Gujarati", "Punjabi", "Chinese", "Common"];
 
@@ -190,9 +190,7 @@ const Categories = () => {
       {/* GRID (ONLY THIS SCROLLS) */}
       <div className="bg-white rounded-xl border shadow-sm p-4 h-[65vh] overflow-y-auto">
         {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="animate-spin" />
-          </div>
+          <Loader label="Loading categories..." containerClassName="py-20" />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filtered.map(cat => (
@@ -324,8 +322,8 @@ const Categories = () => {
 
             <div className="max-h-[150px] overflow-y-auto divide-y scrollbar-thin">
               {viewLoading ? (
-                <div className="p-6 text-center">
-                  <Loader2 className="animate-spin mx-auto" />
+                <div className="p-6">
+                  <Loader label="Loading items..." />
                 </div>
               ) : viewProducts.length === 0 ? (
                 <p className="p-6 text-center text-gray-500">
