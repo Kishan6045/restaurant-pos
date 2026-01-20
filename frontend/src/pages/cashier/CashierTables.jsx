@@ -43,20 +43,34 @@ const CashierTables = () => {
         </div>
 
         {/* FLOOR FILTER */}
-        <div className="mt-4 flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
-          {FLOORS.map((f) => (
-            <button
-              key={f}
-              onClick={() => setFloor(f)}
-              className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold border transition-all
-                ${floor === f
-                  ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                }`}
-            >
-              {f}
-            </button>
-          ))}
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-2">
+          <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+            {FLOORS.map((f) => (
+              <button
+                key={f}
+                onClick={() => setFloor(f)}
+                className={`group shrink-0 flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-all
+                  ${floor === f
+                    ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                  }`}
+              >
+                <span
+                  className={`h-2.5 w-2.5 rounded-full border
+                    ${floor === f
+                      ? "bg-white border-white"
+                      : "bg-slate-300 border-slate-300"
+                    }`}
+                />
+                <span className="whitespace-nowrap">{f}</span>
+                <span className={`hidden sm:inline text-[10px] uppercase tracking-wide
+                  ${floor === f ? "text-white/70" : "text-slate-400"}
+                `}>
+                  Floor
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
