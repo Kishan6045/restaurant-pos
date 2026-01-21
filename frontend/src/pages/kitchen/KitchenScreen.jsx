@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import ProfileDropdown from "../../components/ProfileDropdown";
 import api from "../../utils/axios";
 
 const KitchenScreen = () => {
@@ -101,6 +102,20 @@ const KitchenScreen = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+      <header className="sticky top-0 z-30">
+        <div className="bg-white/90 backdrop-blur border-b border-slate-200">
+          <div className="mx-auto w-full max-w-7xl h-12 sm:h-14 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="h-8 w-1.5 rounded-full bg-gradient-to-b from-emerald-500 to-emerald-600" />
+              <span className="text-sm sm:text-base font-semibold text-slate-900">
+                Kitchen Panel
+              </span>
+            </div>
+            <ProfileDropdown role="kitchen" />
+          </div>
+        </div>
+      </header>
+
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
