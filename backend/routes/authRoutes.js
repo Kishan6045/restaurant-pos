@@ -4,8 +4,11 @@ const router = express.Router();
 const {
     register,
     login,
+    getProfile,
     refreshToken,
 } = require("../controllers/authController");
+const authMiddleware = require("../middlewares/authMiddleware");
+
 
 
 
@@ -14,6 +17,9 @@ router.post("/register", register);
 
 // Login Routes
 router.post("/login", login);
+
+// Current user
+router.get("/me", authMiddleware, getProfile);
 
 // refresh Routes
 router.post("/refresh", refreshToken)
