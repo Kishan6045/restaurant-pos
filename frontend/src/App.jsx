@@ -16,7 +16,7 @@ import Reports from "./pages/admin/Reports";
 import Permission from "./pages/admin/Permission";
 import CashierLayout from "./layouts/CashierLayout";
 import CashierTables from "./pages/cashier/CashierTables";
-import OrderScreen from "./pages/cashier/OrderScreen";
+import OrderScreen from "./pages/cashier/orders/OrderScreen";
 import KitchenScreen from "./pages/kitchen/KitchenScreen";
 import BillingScreen from "./pages/cashier/BillingScreen";
 
