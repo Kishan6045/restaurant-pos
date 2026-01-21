@@ -53,7 +53,7 @@ const ProfileDropdown = ({ role, userName }) => {
       {open && (
         <div
           className="
-            absolute right-0 mt-3
+            absolute right-0 top-full mt-3
             w-60
             bg-white
             rounded-xl
