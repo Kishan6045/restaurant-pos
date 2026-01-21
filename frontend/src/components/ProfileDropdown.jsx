@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { User, LogOut } from "lucide-react";
 import api from "../utils/axios";
 
@@ -61,6 +62,104 @@ const ProfileDropdown = ({ role, userName }) => {
   const roleLabel = formatRole(profile?.role || role || storedRole);
   const displayName =
     userName || profile?.name || (roleLabel ? `${roleLabel} User` : "User");
+
+  const canUseDOM = typeof document !== "undefined";
+  const profileModal = profileOpen ? (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) {
+          setProfileOpen(false);
+        }
+      }}
+    >
+      <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
+        <div className="flex items-start justify-between border-b px-6 py-2">
+          <div>
+            <h3 className="text-base font-semibold text-gray-800">
+              Profile Details
+            </h3>
+            <p className="text-xs text-gray-500">
+              Account information from your login
+            </p>
+          </div>
+        </div>
+
+        <div className="px-6 py-5">
+          {profileLoading && (
+            <p className="text-sm text-gray-500">
+              Loading profile details...
+            </p>
+          )}
+
+          {profileError && (
+            <p className="text-sm text-red-500">{profileError}</p>
+          )}
+
+          {!profileLoading && !profileError && profile && (
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between gap-6">
+                <span className="text-xs uppercase tracking-wide text-gray-600">
+                  Name :
+                </span>
+                <span className="text-right font-medium text-gray-800">
+                  {profile.name}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-6">
+                <span className="text-xs uppercase tracking-wide text-gray-600">
+                  Email :
+                </span>
+                <span className="max-w-[220px] break-all text-right text-gray-600">
+                  {profile.email}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-6">
+                <span className="text-xs uppercase tracking-wide text-gray-600">
+                  Role :
+                </span>
+                <span className="text-right text-gray-700">
+                  {formatRole(profile.role)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-6">
+                <span className="text-xs uppercase tracking-wide text-gray-600">
+                  Status :
+                </span>
+                <span className="text-right text-gray-700">
+                  {profile.isActive ? "Active" : "Blocked"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-6">
+                <span className="text-xs uppercase tracking-wide text-gray-600">
+                  Joined :
+                </span>
+                <span className="text-right text-gray-700">
+                  {formatDate(profile.createdAt)}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {!profileLoading && !profileError && !profile && (
+            <p className="text-sm text-gray-500">
+              Profile data not available.
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center justify-end border-t px-6 py-2">
+          <button
+            type="button"
+            onClick={() => setProfileOpen(false)}
+            className="rounded-lg border border-red-200 px-2 py-1 text-sm font-medium text-red-600 hover:bg-gray-100"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <div ref={ref} className="relative" onMouseEnter={() => setOpen(true)}>
@@ -131,102 +230,7 @@ const ProfileDropdown = ({ role, userName }) => {
         </div>
       )}
 
-      {profileOpen && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) {
-              setProfileOpen(false);
-            }
-          }}
-        >
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
-            <div className="flex items-start justify-between border-b px-6 py-2">
-              <div>
-                <h3 className="text-base font-semibold text-gray-800">
-                  Profile Details
-                </h3>
-                <p className="text-xs text-gray-500">
-                  Account information from your login
-                </p>
-              </div>
-            </div>
-
-            <div className="px-6 py-5">
-              {profileLoading && (
-                <p className="text-sm text-gray-500">
-                  Loading profile details...
-                </p>
-              )}
-
-              {profileError && (
-                <p className="text-sm text-red-500">{profileError}</p>
-              )}
-
-              {!profileLoading && !profileError && profile && (
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between gap-6">
-                    <span className="text-xs uppercase tracking-wide text-gray-600">
-                      Name :
-                    </span>
-                    <span className="text-right font-medium text-gray-800">
-                      {profile.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-6">
-                    <span className="text-xs uppercase tracking-wide text-gray-600">
-                      Email :
-                    </span>
-                    <span className="max-w-[220px] break-all text-right text-gray-600">
-                      {profile.email}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-6">
-                    <span className="text-xs uppercase tracking-wide text-gray-600">
-                      Role :
-                    </span>
-                    <span className="text-right text-gray-700">
-                      {formatRole(profile.role)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-6">
-                    <span className="text-xs uppercase tracking-wide text-gray-600">
-                      Status :
-                    </span>
-                    <span className="text-right text-gray-700">
-                      {profile.isActive ? "Active" : "Blocked"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-6">
-                    <span className="text-xs uppercase tracking-wide text-gray-600">
-                      Joined :
-                    </span>
-                    <span className="text-right text-gray-700">
-                      {formatDate(profile.createdAt)}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {!profileLoading && !profileError && !profile && (
-                <p className="text-sm text-gray-500">
-                  Profile data not available.
-                </p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end border-t px-6 py-2">
-              <button
-                type="button"
-                onClick={() => setProfileOpen(false)}
-                className="rounded-lg border border-red-200 px-2 py-1 text-sm font-medium text-red-600 hover:bg-gray-100"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {canUseDOM && profileModal && createPortal(profileModal, document.body)}
     </div>
   );
 };
