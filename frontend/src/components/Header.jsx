@@ -10,7 +10,7 @@ const Header = ({ role }) => {
         {role === "kitchen" && "Kitchen Display"}
       </h2>
 
-      <ProfileDropdown />
+      <ProfileDropdown role={role} />
     </header>
   );
 };

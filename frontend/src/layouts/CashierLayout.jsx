@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import ProfileDropdown from "../components/ProfileDropdown";
 
 const CashierLayout = () => {
   return (
@@ -12,9 +13,12 @@ const CashierLayout = () => {
                 Cashier Panel
               </span>
             </div>
-            <span className="hidden sm:block text-xs text-slate-500">
-              POS Console
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="hidden sm:block text-xs text-slate-500">
+                POS Console
+              </span>
+              <ProfileDropdown role="cashier" />
+            </div>
           </div>
         </div>
       </header>

@@ -1,9 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import { User, Settings, LogOut } from "lucide-react";
 
-const ProfileDropdown = () => {
+const ProfileDropdown = ({ role, userName }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const storedRole =
+    typeof window !== "undefined" ? localStorage.getItem("role") : null;
+  const resolvedRole = role || storedRole;
+  const roleLabel = resolvedRole
+    ? `${resolvedRole.charAt(0).toUpperCase()}${resolvedRole.slice(1)}`
+    : "User";
+  const displayName = userName || `${roleLabel} User`;
 
   // close on outside click (mobile safety)
   useEffect(() => {
@@ -57,9 +64,9 @@ const ProfileDropdown = () => {
         >
           {/* User info */}
           <div className="px-5 py-4 border-b">
-            <p className="text-xs text-gray-500">Admin</p>
+            <p className="text-xs text-gray-500">{roleLabel}</p>
             <p className="text-sm font-semibold text-gray-800">
-                Admin User
+              {displayName}
             </p>
           </div>
 
