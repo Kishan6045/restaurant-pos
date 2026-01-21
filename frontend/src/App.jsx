@@ -15,51 +15,51 @@ import LiveOrders from "./pages/admin/LiveOrders";
 import Reports from "./pages/admin/Reports";
 import Permission from "./pages/admin/Permission";
 import CashierLayout from "./layouts/CashierLayout";
-import CashierTables from "./pages/cashier/CashierTables";
-import OrderScreen from "./pages/cashier/OrderScreen";
+import CashierTables from "./pages/cashier/tables/CashierTables";
+import OrderScreen from "./pages/cashier/orders/OrderScreen";
 import KitchenScreen from "./pages/kitchen/KitchenScreen";
-import BillingScreen from "./pages/cashier/BillingScreen";
+import BillingScreen from "./pages/cashier/billing/BillingScreen";
 
 function App() {
   return (
     <BrowserRouter>  {/*without relod login */}
-    <AuthProvider>
-      <ToastContainer position="top-right" autoClose={3000} />
+      <AuthProvider>
+        <ToastContainer position="top-right" autoClose={3000} />
 
-      <Routes>
-        {/* default */}
-         <Route path="/" element={<Navigate to="/login" />} />
-         <Route path="/login" element={<Login />} />
+        <Routes>
+          {/* default */}
+          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/login" element={<Login />} />
 
-        {/* Admin layout */}
-        <Route path="/admin" element={<AdminLayout />}>
-          {/* <Route index element={<AdminDashboard />} /> */}
-          <Route index element={< Overview/>} />
-          <Route path="categories" element={<Categories/>}/>
-          <Route path="products" element={<Products/>}/>
-          <Route path="tables" element={<Tables/>}/>
-          <Route path="staff" element={<Staff/>}/>
-          <Route path="liveorders" element={<LiveOrders/>}/>
-          <Route path="reports" element={<Reports/>}/>
-          <Route path="permissions" element={<Permission/>}/>
-        </Route>
-        
-        {/* Cashier layout */}
-        <Route path="/cashier" element={<CashierLayout />} >
-          <Route index element={<Navigate to="tables" />} />
-         <Route path="tables" element={<CashierTables />} />
-          <Route path="table/:tableId" element={<OrderScreen />} />
-          <Route path="billing/:tableId" element={<BillingScreen />} />
-        </Route>
-      
+          {/* Admin layout */}
+          <Route path="/admin" element={<AdminLayout />}>
+            {/* <Route index element={<AdminDashboard />} /> */}
+            <Route index element={< Overview />} />
+            <Route path="categories" element={<Categories />} />
+            <Route path="products" element={<Products />} />
+            <Route path="tables" element={<Tables />} />
+            <Route path="staff" element={<Staff />} />
+            <Route path="liveorders" element={<LiveOrders />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="permissions" element={<Permission />} />
+          </Route>
 
-        {/* Kitchen layout */}
-        <Route path="/kitchen" element={<KitchenScreen />} />
+          {/* Cashier layout */}
+          <Route path="/cashier" element={<CashierLayout />} >
+            <Route index element={<Navigate to="tables" />} />
+            <Route path="tables" element={<CashierTables />} />
+            <Route path="table/:tableId" element={<OrderScreen />} />
+            <Route path="billing/:tableId" element={<BillingScreen />} />
+          </Route>
+
+
+          {/* Kitchen layout */}
+          <Route path="/kitchen" element={<KitchenScreen />} />
 
 
 
         </Routes>
-        </AuthProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

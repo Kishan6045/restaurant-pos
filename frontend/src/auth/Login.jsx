@@ -1,45 +1,65 @@
 import { useState, useEffect } from "react";
-import api from "../utils/axios";
-import { useNavigate, useLocation } from "react-router-dom";
-import { toast } from "react-toastify";
-import { FiEye, FiEyeOff } from "react-icons/fi";
-import Loader from "../components/Loader";
+import api from "../utils/axios"; // Axios instance (baseURL + interceptors configured)
+import { useNavigate, useLocation } from "react-router-dom";  // React Router hooks for navigation & current route
+import { toast } from "react-toastify";  // Toast notifications (success / error)
+import { FiEye, FiEyeOff } from "react-icons/fi"; // Icons for show / hide password
 
-
+import Loader from "../components/Loader";  // Reusable loader component
 
 const Login = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true); // page load check
+  const navigate = useNavigate(); // page reload kiye bina admin ya koi bhi page me redirect 
 
-  //  AUTO REDIRECT IF ALREADY LOGGED IN
+  // Current route info (pathname etc.)
+  const location = useLocation();
+
+  // Form state (controlled inputs)
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
+
+  // Toggle for password visibility
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Login API call loading state
+  const [loading, setLoading] = useState(false);
+
+  // Initial session check loader (page load)
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // ===============================
+  // AUTO REDIRECT IF USER IS LOGGED IN
+  // ===============================
   useEffect(() => {
+    // Check tokens & role from localStorage
     const refreshToken = localStorage.getItem("refreshToken");
     const role = localStorage.getItem("role");
 
+    // Role-based dashboard mapping
     const roleRouteMap = {
       admin: "/admin",
       cashier: "/cashier",
       kitchen: "/kitchen",
     };
 
+    // If user already logged in and on login/root page
     if (
       refreshToken &&
       role &&
       roleRouteMap[role] &&
       (location.pathname === "/login" || location.pathname === "/")
     ) {
+      // Redirect directly to role dashboard
       navigate(roleRouteMap[role], { replace: true });
     }
 
-    //  HAR CASE me loader band
+    // Stop session-check loader in all cases
     setCheckingAuth(false);
   }, [navigate, location.pathname]);
 
-  //  Loader while checking session
+  // ===============================
+  // FULL SCREEN LOADER WHILE CHECKING SESSION
+  // ===============================
   if (checkingAuth) {
     return (
       <Loader
@@ -50,24 +70,36 @@ const Login = () => {
     );
   }
 
+  // ===============================
+  // INPUT CHANGE HANDLER (EMAIL / PASSWORD)
+  // ===============================
   const handleChange = (e) => {
+    // Update specific field using input name
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // ===============================
+  // LOGIN FORM SUBMIT HANDLER
+  // ===============================
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+    e.preventDefault(); // Prevent page reload
+    setLoading(true); // Enable button loader
+
     try {
+      // Login API call
       const res = await api.post("/api/auth/login", form, {
-        skipAuthRefresh: true,
+        skipAuthRefresh: true, // Prevent interceptor refresh loop
       });
 
+      // Save tokens & role for session handling
       localStorage.setItem("accessToken", res.data.accessToken);
       localStorage.setItem("refreshToken", res.data.refreshToken);
       localStorage.setItem("role", res.data.role);
 
-      // backend role decide karta hai
+      // Success notification
       toast.success("Login successful");
+
+      // Role-based redirect after login
       const roleRouteMap = {
         admin: "/admin",
         cashier: "/cashier",
@@ -76,6 +108,7 @@ const Login = () => {
 
       navigate(roleRouteMap[res.data.role] || "/login");
     } catch (error) {
+      // Extract backend error message safely
       const msg =
         error.response?.data?.message ||
         error.response?.data?.error ||
@@ -83,17 +116,24 @@ const Login = () => {
 
       toast.error(msg);
     } finally {
+      // Disable loader in both success & error
       setLoading(false);
     }
   };
 
+  // ===============================
+  // UI START
+  // ===============================
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-stone-50 via-amber-50 to-emerald-50">
+      {/* Decorative background blobs */}
       <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-amber-200/40 blur-3xl"></div>
       <div className="pointer-events-none absolute -bottom-28 -right-24 h-80 w-80 rounded-full bg-emerald-200/40 blur-3xl"></div>
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-5xl items-center px-4 py-12">
         <div className="grid w-full overflow-hidden rounded-3xl bg-white/95 shadow-2xl ring-1 ring-black/5 md:grid-cols-2">
+
+          {/* LEFT PANEL – Branding & Roles (Desktop only) */}
           <div className="hidden flex-col justify-between bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 p-10 text-white md:flex">
             <div>
               <div className="flex items-center gap-4">
@@ -107,10 +147,11 @@ const Login = () => {
                   <p className="text-xl font-semibold">Royal Shiv</p>
                 </div>
               </div>
-
             </div>
 
+            {/* Role descriptions */}
             <div className="space-y-4">
+              {/* Admin */}
               <div className="flex items-center gap-3 rounded-2xl bg-white/5 px-4 py-3 ring-1 ring-white/10">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-semibold text-emerald-200">
                   AD
@@ -122,6 +163,8 @@ const Login = () => {
                   </p>
                 </div>
               </div>
+
+              {/* Cashier */}
               <div className="flex items-center gap-3 rounded-2xl bg-white/5 px-4 py-3 ring-1 ring-white/10">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/20 text-xs font-semibold text-amber-200">
                   CA
@@ -133,6 +176,8 @@ const Login = () => {
                   </p>
                 </div>
               </div>
+
+              {/* Kitchen */}
               <div className="flex items-center gap-3 rounded-2xl bg-white/5 px-4 py-3 ring-1 ring-white/10">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-500/20 text-xs font-semibold text-sky-200">
                   KT
@@ -151,7 +196,9 @@ const Login = () => {
             </p>
           </div>
 
+          {/* RIGHT PANEL – LOGIN FORM */}
           <div className="p-8 sm:p-10">
+            {/* Header */}
             <div className="text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500 text-white text-lg font-semibold shadow-lg shadow-amber-200">
                 RS
@@ -167,8 +214,11 @@ const Login = () => {
               </p>
             </div>
 
+            {/* Login Form */}
             <div className="mt-8 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
               <form onSubmit={handleSubmit} className="space-y-5">
+
+                {/* Email Field */}
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Email
@@ -190,6 +240,7 @@ const Login = () => {
                   </div>
                 </div>
 
+                {/* Password Field */}
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Password
@@ -208,18 +259,23 @@ const Login = () => {
                       className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-11 pr-16 text-sm text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-100"
                       required
                     />
+
+                    {/* Show / Hide Password Button */}
                     <button
                       type="button"
                       onClick={() => setShowPassword((prev) => !prev)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-amber-600 transition hover:bg-amber-50 hover:text-amber-700"
                     >
-                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      {showPassword ? (
+                        <FiEyeOff size={18} />
+                      ) : (
+                        <FiEye size={18} />
+                      )}
                     </button>
-
-
                   </div>
                 </div>
 
+                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={loading}
