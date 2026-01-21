@@ -85,10 +85,10 @@ const BillingScreen = () => {
       <div className="p-6">
         <h2 className="mb-2 text-xl font-bold">No open order found</h2>
         <button
-          onClick={() => navigate("/cashier/tables")}
+          onClick={() => navigate(`/cashier/table/${tableId}`)}
           className="rounded bg-black px-4 py-2 text-white"
         >
-          Back to Tables
+          Back to Table
         </button>
       </div>
     );
@@ -99,10 +99,10 @@ const BillingScreen = () => {
       <div className="mx-auto w-full max-w-5xl px-4 py-6">
         <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <button
-            onClick={() => navigate("/cashier/tables")}
+            onClick={() => navigate(`/cashier/table/${tableId}`)}
             className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300"
           >
-            Back to Tables
+            Back to Table
           </button>
           <div className="min-w-[200px] text-center">
             <p className="text-xs uppercase tracking-wide text-slate-400">
