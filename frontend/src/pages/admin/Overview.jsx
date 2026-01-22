@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../../utils/axios";
 import Loader from "../../components/Loader";
+import useAutoRefresh from "../../utils/useAutoRefresh";
 
 
 // Dashboard components
@@ -8,6 +9,8 @@ import StatCard from "../../components/dashboardcharts/StatCard.jsx";
 import PaymentPieChart from "../../components/dashboardcharts/PaymentPieChart.jsx";
 import SalesLineChart from "../../components/dashboardcharts/SalesLineChart.jsx";
 import TopItemsTable from "../../components/dashboardcharts/TopItemsTable.jsx";
+
+const OVERVIEW_REFRESH_MS = 10000;
 
 const Overview = () => {
   const [loading, setLoading] = useState(true);
@@ -72,9 +75,12 @@ const Overview = () => {
 
   // 🔄 Load dashboard data
   const fetchOverview = async (opts = {}) => {
+    const { silent = false } = opts;
     try {
-      setLoading(true);
-      setError("");
+      if (!silent) {
+        setLoading(true);
+        setError("");
+      }
 
       const nextPreset = opts.preset ?? preset;
       const params = {};
@@ -88,16 +94,19 @@ const Overview = () => {
       const res = await api.get("/api/admin/overview", { params });
 
       setData(res.data);
+      if (silent) setError("");
     } catch (err) {
       console.error("Dashboard load failed:", err);
 
-      if (err.response) {
-        setError(err.response.data?.message || "API Error");
-      } else {
-        setError("Server not reachable");
+      if (!silent) {
+        if (err.response) {
+          setError(err.response.data?.message || "API Error");
+        } else {
+          setError("Server not reachable");
+        }
       }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -105,6 +114,15 @@ const Overview = () => {
     fetchOverview({ preset: "today" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const customRangeIncomplete =
+    preset === "custom" && (!from || !to);
+
+  useAutoRefresh(
+    () => fetchOverview({ silent: true }),
+    OVERVIEW_REFRESH_MS,
+    { runOnMount: false, enabled: !customRangeIncomplete }
+  );
 
   if (loading) {
     return (

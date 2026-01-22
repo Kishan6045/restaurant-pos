@@ -9,6 +9,9 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import Loader from "../../components/Loader";
+import useAutoRefresh from "../../utils/useAutoRefresh";
+
+const STAFF_REFRESH_MS = 15000;
 
 
 const Staff = () => {
@@ -26,21 +29,27 @@ const Staff = () => {
   const [statusFilter, setStatusFilter] = useState("");
 
   // ================= LOAD =================
-  const loadStaff = async () => {
-    setLoading(true);
+  const loadStaff = async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
     try {
       const res = await api.get("/api/staff");
       setStaff(res.data.staff || []);
     } catch {
-      toast.error("Load failed");
+      if (!silent) toast.error("Load failed");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {    // pura page load hote hi staff data load karne ke liye
     loadStaff();
   }, []);
+
+  useAutoRefresh(
+    () => loadStaff({ silent: true }),
+    STAFF_REFRESH_MS,
+    { runOnMount: false, enabled: !editStaff }
+  );
 
   // ================= CREATE =================
   const addStaff = async () => {

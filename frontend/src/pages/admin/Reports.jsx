@@ -1,6 +1,9 @@
 import { useState } from "react";
 import api from "../../utils/axios";
 import Loader from "../../components/Loader";
+import useAutoRefresh from "../../utils/useAutoRefresh";
+
+const REPORT_REFRESH_MS = 20000;
 
 const Reports = () => {
   const [type, setType] = useState("daily");
@@ -9,25 +12,39 @@ const Reports = () => {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const loadReport = async () => {
-    setLoading(true);
-    setReport(null);
+  const loadReport = async ({ silent = false } = {}) => {
+    if (!silent) {
+      setLoading(true);
+      setReport(null);
+    }
 
     try {
       let query = `/api/reports?type=${type}`;
 
       if (type === "custom") {
-        if (!from || !to) return alert("Select date range");
+        if (!from || !to) {
+          if (!silent) alert("Select date range");
+          return;
+        }
         query = `/api/reports?from=${from}&to=${to}`;
       }
       const res = await api.get(query);
       setReport(res.data);
     } catch {
-      alert("Failed to load report");
+      if (!silent) alert("Failed to load report");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
+
+  const customRangeIncomplete =
+    type === "custom" && (!from || !to);
+
+  useAutoRefresh(
+    () => loadReport({ silent: true }),
+    REPORT_REFRESH_MS,
+    { runOnMount: false, enabled: !!report && !customRangeIncomplete }
+  );
 
   return (
     <div className="min-h-screen bg-gray-100 overflow-x-hidden">

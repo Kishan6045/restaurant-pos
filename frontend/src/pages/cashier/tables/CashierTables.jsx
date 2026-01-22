@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import api from "../../../utils/axios";
 import { useNavigate } from "react-router-dom";
+import api from "../../../utils/axios";
+import useAutoRefresh from "../../../utils/useAutoRefresh";
 
 const FLOORS = ["All", "Ground", "First", "Second"]; // Available floor options for filtering tables
 const FLOOR_STORAGE_KEY = "cashier:selectedFloor";  // Key used to store selected floor in localStorage
+const TABLES_REFRESH_MS = 5000;
 
 // Main component
 const CashierTables = () => {
@@ -24,14 +26,20 @@ const CashierTables = () => {
 
   // Function to fetch tables from backend API
   const fetchTables = async () => {
-    const res = await api.get("/api/tables"); // API call
-    setTables(res.data.tables || []); // Store tables in state
+    try {
+      const res = await api.get("/api/tables"); // API call
+      setTables(res.data.tables || []); // Store tables in state
+    } catch (err) {
+      console.error("Failed to load tables:", err);
+    }
   };
 
   // Fetch tables once when component mounts
   useEffect(() => {
     fetchTables();
   }, []);
+
+  useAutoRefresh(fetchTables, TABLES_REFRESH_MS, { runOnMount: false });
 
   // Save selected floor to localStorage whenever it changes
   useEffect(() => {

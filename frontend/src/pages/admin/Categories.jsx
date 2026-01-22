@@ -10,9 +10,11 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
+import useAutoRefresh from "../../utils/useAutoRefresh";
 
 
 const CUISINES = ["Gujarati", "Punjabi", "Chinese", "Common"];
+const CATEGORIES_REFRESH_MS = 15000;
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
@@ -40,21 +42,27 @@ const Categories = () => {
   const [viewLoading, setViewLoading] = useState(false);
 
   /* ================= FETCH ================= */
-  const loadCategories = async () => {
+  const loadCategories = async ({ silent = false } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await api.get("/api/categories");
       setCategories(res.data.categories || []);
     } catch {
-      toast.error("Failed to load categories");
+      if (!silent) toast.error("Failed to load categories");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadCategories();
   }, []);
+
+  useAutoRefresh(
+    () => loadCategories({ silent: true }),
+    CATEGORIES_REFRESH_MS,
+    { runOnMount: false, enabled: !editOpen && !viewOpen }
+  );
 
   /* ================= ADD ================= */
   const addCategory = async () => {

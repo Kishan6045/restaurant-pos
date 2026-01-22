@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Clock } from "lucide-react";
 import api from "../../../utils/axios";
+import useAutoRefresh from "../../../utils/useAutoRefresh";
 
 // Components
 import CartSidebar from "./CartSidebar";
@@ -11,6 +12,8 @@ import ProductGrid from "./ProductGrid";
 import SearchAndCategories from "./SearchAndCategories";
 
 const PAGE_SIZE = 24; // Pagination size
+const ORDER_REFRESH_MS = 5000;
+const MENU_REFRESH_MS = 15000;
 
 const ALL_CATEGORY = "all"; // Special value for all categories
 
@@ -34,6 +37,10 @@ const OrderScreen = () => {
     loadProducts();
     loadExistingOrder();
   }, []);
+
+  useAutoRefresh(loadExistingOrder, ORDER_REFRESH_MS, { runOnMount: false });
+  useAutoRefresh(loadCategories, MENU_REFRESH_MS, { runOnMount: false });
+  useAutoRefresh(loadProducts, MENU_REFRESH_MS, { runOnMount: false });
 
   // Reset pagination when category or search changes
   useEffect(() => {

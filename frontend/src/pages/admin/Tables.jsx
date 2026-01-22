@@ -3,9 +3,11 @@ import api from "../../utils/axios";
 import { Plus, Pencil, Trash2,  X } from "lucide-react";
 import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
+import useAutoRefresh from "../../utils/useAutoRefresh";
 
 
 const FLOORS = ["Ground", "First", "Second"];
+const TABLES_REFRESH_MS = 5000;
 
 const Tables = () => {
   const [tables, setTables] = useState([]);
@@ -20,21 +22,31 @@ const Tables = () => {
   const [floor, setFloor] = useState("Ground");
 
   // ================= FETCH TABLES =================
-  const fetchTables = async () => {
+  const fetchTables = async ({ silent = false } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await api.get("/api/tables");
       setTables(res.data.tables || []);
     } catch (err) {
-      toast.error("Failed to load tables");
+      if (silent) {
+        console.error("Failed to refresh tables:", err);
+      } else {
+        toast.error("Failed to load tables");
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchTables();
   }, []);
+
+  useAutoRefresh(
+    () => fetchTables({ silent: true }),
+    TABLES_REFRESH_MS,
+    { runOnMount: false }
+  );
 
   // ================= CREATE / UPDATE =================
   const handleSubmit = async (e) => {

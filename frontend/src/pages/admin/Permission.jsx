@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import api from "../../utils/axios";
 import { toast } from "react-toastify";
 import { togglePermission } from "../../helpers/permissionHelper";
+import useAutoRefresh from "../../utils/useAutoRefresh";
+
+const PERMISSIONS_REFRESH_MS = 20000;
 
 const ROLES = ["admin", "cashier", "kitchen"];
 
@@ -27,18 +30,29 @@ const PermissionManagement = () => {
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  const load = async () => {
-    const res = await api.get("/api/permissions/matrix");
-    setData({
-      admin: res.data.admin || [],
-      cashier: res.data.cashier || [],
-      kitchen: res.data.kitchen || []
-    });
+  const load = async ({ silent = false } = {}) => {
+    try {
+      const res = await api.get("/api/permissions/matrix");
+      setData({
+        admin: res.data.admin || [],
+        cashier: res.data.cashier || [],
+        kitchen: res.data.kitchen || []
+      });
+    } catch (err) {
+      if (!silent) toast.error("Failed to load permissions");
+      else console.error("Failed to refresh permissions:", err);
+    }
   };
 
   useEffect(() => {
     load();
   }, []);
+
+  useAutoRefresh(
+    () => load({ silent: true }),
+    PERMISSIONS_REFRESH_MS,
+    { runOnMount: false, enabled: !isEditing }
+  );
 
   const has = (role, perm) => data[role]?.includes(perm);
 

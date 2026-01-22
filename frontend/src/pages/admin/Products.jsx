@@ -3,6 +3,9 @@ import api from "../../utils/axios";
 import { Trash2, Pencil, X } from "lucide-react";
 import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
+import useAutoRefresh from "../../utils/useAutoRefresh";
+
+const PRODUCTS_REFRESH_MS = 15000;
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -38,20 +41,26 @@ const Products = () => {
 
   /* ================= FETCH ================= */
 
-  const loadCategories = async () => {
-    const res = await api.get("/api/categories");
-    setCategories(res.data.categories || []);
+  const loadCategories = async ({ silent = false } = {}) => {
+    try {
+      const res = await api.get("/api/categories");
+      setCategories(res.data.categories || []);
+    } catch (err) {
+      if (!silent) toast.error("Failed to load categories");
+      else console.error("Failed to refresh categories:", err);
+    }
   };
 
-  const loadProducts = async () => {
+  const loadProducts = async ({ silent = false } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await api.get("/api/products");
       setProducts(res.data.products || []);
-    } catch {
-      toast.error("Failed to load products");
+    } catch (err) {
+      if (!silent) toast.error("Failed to load products");
+      else console.error("Failed to refresh products:", err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -59,6 +68,18 @@ const Products = () => {
     loadCategories();
     loadProducts();
   }, []);
+
+  useAutoRefresh(
+    () => loadProducts({ silent: true }),
+    PRODUCTS_REFRESH_MS,
+    { runOnMount: false }
+  );
+
+  useAutoRefresh(
+    () => loadCategories({ silent: true }),
+    PRODUCTS_REFRESH_MS,
+    { runOnMount: false }
+  );
 
   /* ================= ADD ================= */
 

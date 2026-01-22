@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../../utils/axios";
 import Loader from "../../../components/Loader";
+import useAutoRefresh from "../../../utils/useAutoRefresh";
 
 const TAX_RATE = 0.05;
+const ORDER_REFRESH_MS = 5000;
 
 const BillingScreen = () => {
   const { tableId } = useParams();
@@ -14,8 +16,10 @@ const BillingScreen = () => {
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [paying, setPaying] = useState(false);
 
-  const loadOrder = async () => {
+  const loadOrder = async ({ silent = false } = {}) => {
     try {
+      if (!silent) setLoading(true);
+
       const res = await api.get("/api/orders");
       const openOrder = (res.data || []).find(
         (o) =>
@@ -25,15 +29,25 @@ const BillingScreen = () => {
 
       setOrder(openOrder || null);
     } catch (err) {
-      alert("Failed to load order");
+      if (silent) {
+        console.error("Failed to refresh order:", err);
+      } else {
+        alert("Failed to load order");
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadOrder();
   }, []);
+
+  useAutoRefresh(
+    () => loadOrder({ silent: true }),
+    ORDER_REFRESH_MS,
+    { runOnMount: false }
+  );
 
   const items = order?.items || [];
 
