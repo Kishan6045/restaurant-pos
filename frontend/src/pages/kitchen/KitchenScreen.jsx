@@ -1,12 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import ProfileDropdown from "../../components/ProfileDropdown";
 import api from "../../utils/axios";
+
+const STATUS_STYLES = {
+  pending: "bg-amber-100 text-amber-700",
+  preparing: "bg-orange-100 text-orange-700",
+  ready: "bg-emerald-100 text-emerald-700",
+  served: "bg-slate-100 text-slate-600",
+};
 
 const KitchenScreen = () => {
   const [rows, setRows] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
-  const knownIds = useRef(new Set());
 
   // ================= FETCH & MERGE =================
   const fetchAndMerge = async () => {
@@ -18,33 +24,27 @@ const KitchenScreen = () => {
         ? res.data
         : res.data.orders || [];
 
-      const newRows = [];
+      const nextRows = [];
 
       orders.forEach((order) => {
         order.items?.forEach((item) => {
-          if (!["pending", "preparing"].includes(item.status)) return;
-
+          const status = item.status || "pending";
           const key = `${order._id}_${item._id}`;
-          if (knownIds.current.has(key)) return;
 
-          knownIds.current.add(key);
-
-          newRows.push({
+          nextRows.push({
             key,
             orderId: order._id,
             itemId: item._id,
             floor: order.tableId?.floor || "Ground",
             table: order.tableId?.tableNumber || "-",
-            name: item.product?.name || item.name,
+            name: item.productId?.name || item.product?.name || item.name,
             qty: item.quantity,
-            status: item.status,
+            status,
           });
         });
       });
 
-      if (newRows.length) {
-        setRows((prev) => [...newRows, ...prev]);
-      }
+      setRows(nextRows);
 
       setLastUpdated(new Date());
     } catch (err) {
@@ -57,11 +57,9 @@ const KitchenScreen = () => {
   // ================= STATUS UPDATE =================
   const updateStatus = async (orderId, itemId, nextStatus) => {
     setRows((prev) =>
-      prev
-        .map((r) =>
-          r.itemId === itemId ? { ...r, status: nextStatus } : r
-        )
-        .filter((r) => r.status !== "ready")
+      prev.map((r) =>
+        r.itemId === itemId ? { ...r, status: nextStatus } : r
+      )
     );
 
     try {
@@ -81,10 +79,13 @@ const KitchenScreen = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const pendingCount = rows.filter((r) => r.status === "pending").length;
-  const preparingCount = rows.filter((r) => r.status === "preparing").length;
+  const activeRows = rows.filter((r) =>
+    ["pending", "preparing"].includes(r.status)
+  );
+  const pendingCount = activeRows.filter((r) => r.status === "pending").length;
+  const preparingCount = activeRows.filter((r) => r.status === "preparing").length;
   const uniqueTables = new Set(
-    rows.map((r) => `${r.floor}-${r.table}`)
+    activeRows.map((r) => `${r.floor}-${r.table}`)
   ).size;
 
   const formatTime = (value) => {
@@ -116,7 +117,7 @@ const KitchenScreen = () => {
         <div className="rounded-xl border bg-white overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b">
             <div>
-              <p className="text-sm font-semibold">Live Orders</p>
+              <p className="text-sm font-semibold">Orders</p>
               <p className="text-xs text-slate-500">
                 Updated {formatTime(lastUpdated)}
               </p>
@@ -132,7 +133,7 @@ const KitchenScreen = () => {
 
           {rows.length === 0 ? (
             <div className="p-8 text-center text-slate-500">
-              No pending or preparing items
+              No orders yet
             </div>
           ) : (
             <div
@@ -165,10 +166,7 @@ const KitchenScreen = () => {
                       </td>
                       <td className="p-3 text-center">
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${r.status === "pending"
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-orange-100 text-orange-700"
-                            }`}
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[r.status] || STATUS_STYLES.served}`}
                         >
                           {r.status.toUpperCase()}
                         </span>

@@ -276,10 +276,10 @@ exports.getOrders = async (req, res) => {
   try {
     let filter = {};
     // filter based on role
+    const liveOnly = req.query.liveOnly === "true";
 
-    if (req.user.role === "kitchen") {
+    if (req.user.role === "kitchen" && liveOnly) {
       filter = {
-        orderStatus: "open",
         "items.status": { $in: ["pending", "preparing"] }
       };
     }
