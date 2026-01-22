@@ -11,7 +11,7 @@ const {
 router.get(
   "/orders",
   auth,
-  permit("kitchen.view"), //role("kitchen"),
+  permit("kitchen.view", "orders.read"), //role("kitchen"),
   getOrders
 );
 

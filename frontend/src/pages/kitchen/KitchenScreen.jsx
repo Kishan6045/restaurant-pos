@@ -13,12 +13,23 @@ const KitchenScreen = () => {
   const [rows, setRows] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // ================= FETCH & MERGE =================
   const fetchAndMerge = async () => {
     setIsRefreshing(true);
+    setErrorMessage("");
     try {
-      const res = await api.get("/api/kitchen/orders");
+      let res;
+      try {
+        res = await api.get("/api/kitchen/orders");
+      } catch (err) {
+        if (err.response?.status === 403) {
+          res = await api.get("/api/orders");
+        } else {
+          throw err;
+        }
+      }
 
       const orders = Array.isArray(res.data)
         ? res.data
@@ -48,6 +59,9 @@ const KitchenScreen = () => {
 
       setLastUpdated(new Date());
     } catch (err) {
+      setErrorMessage(
+        err.response?.data?.message || "Failed to load kitchen orders"
+      );
       console.error("Kitchen live fetch error:", err);
     } finally {
       setIsRefreshing(false);
@@ -130,6 +144,12 @@ const KitchenScreen = () => {
               {isRefreshing ? "Refreshing..." : "Refresh"}
             </button>
           </div>
+
+          {errorMessage && (
+            <div className="px-4 py-3 text-xs text-rose-700 bg-rose-50 border-b">
+              {errorMessage}
+            </div>
+          )}
 
           {rows.length === 0 ? (
             <div className="p-8 text-center text-slate-500">
