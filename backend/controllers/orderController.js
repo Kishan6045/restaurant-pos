@@ -230,7 +230,7 @@ exports.updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
 
-    const allowedStatus = ["pending", "preparing", "ready", "served"];
+    const allowedStatus = ["pending", "preparing", "ready"]; // "served"
     if (!allowedStatus.includes(status)) {
       return res.status(400).json({ message: "Invaild status" });
     }
@@ -250,6 +250,20 @@ exports.updateOrderStatus = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
+    //  CHECK: all items of THIS table ready or not
+    const allItemsReady = order.items.every(
+      (item) => item.status === "ready"
+    );
+
+    //  FINAL RULE
+    if (allItemsReady && order.paymentStatus === "paid") {
+      order.orderStatus = "completed";
+      await order.save();
+
+      await Table.findByIdAndUpdate(order.tableId, {
+        status: "available"
+      });
+    }
     res.json(order);
   } catch (error) {
     res.status(500).json({ message: " Status update failed" });

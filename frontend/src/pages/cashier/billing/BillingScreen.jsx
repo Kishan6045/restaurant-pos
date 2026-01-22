@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import api from "../../utils/axios";
-import Loader from "../../components/Loader";
+import api from "../../../utils/axios";
+import Loader from "../../../components/Loader";
 
 const TAX_RATE = 0.05;
 
@@ -18,8 +18,11 @@ const BillingScreen = () => {
     try {
       const res = await api.get("/api/orders");
       const openOrder = (res.data || []).find(
-        (o) => o.tableId?._id === tableId && o.orderStatus === "open"
+        (o) =>
+          o.tableId?._id === tableId &&
+          o.orderStatus !== "completed"
       );
+
       setOrder(openOrder || null);
     } catch (err) {
       alert("Failed to load order");
@@ -60,7 +63,10 @@ const BillingScreen = () => {
 
   const handlePayment = async () => {
     if (!order) return;
-
+    if (order.paymentStatus === "paid") {
+      alert("Payment already completed");
+      return;
+    }
     try {
       setPaying(true);
       await api.post("/api/payments", {
@@ -195,8 +201,8 @@ const BillingScreen = () => {
                     key={method}
                     onClick={() => setPaymentMethod(method)}
                     className={`rounded-lg border px-2 py-2 text-xs font-semibold uppercase transition ${paymentMethod === method
-                        ? "border-slate-900 bg-slate-900 text-white"
-                        : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : "border-slate-200 text-slate-600 hover:bg-slate-50"
                       }`}
                   >
                     {method}
@@ -207,8 +213,8 @@ const BillingScreen = () => {
                 onClick={handlePayment}
                 disabled={paying}
                 className={`mt-4 w-full rounded-xl py-3 text-sm font-bold text-white transition ${paying
-                    ? "bg-slate-300"
-                    : "bg-emerald-600 hover:bg-emerald-700"
+                  ? "bg-slate-300"
+                  : "bg-emerald-600 hover:bg-emerald-700"
                   }`}
               >
                 {paying ? "Processing..." : "Pay & Close"}

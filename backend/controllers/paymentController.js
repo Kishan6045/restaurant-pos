@@ -11,7 +11,7 @@ exports.createPayment = async (req, res) => {
         if (!order)
             return res.status(404).json({ message: "Order not found" });
         if (order.paymentStatus === "paid")
-            return res.status(400).json({ message: "Order already paod" });
+            return res.status(400).json({ message: "Order already paid" });
 
         //Create payment
         const payment = await Payment.create({
@@ -24,17 +24,26 @@ exports.createPayment = async (req, res) => {
         //Close order
         order.paymentStatus = "paid";
         order.paymentMethod = method;  // cash | upi | card
-        order.orderStatus = "closed";
+        order.orderStatus = "billed";
+        // chek kitchen me us tables ki all items ready hai
+        const allItemsReady = order.items.every(
+            (item) => item.status === "ready"
+        );
+
+        if (allItemsReady) {
+            order.orderStatus = "completed";
+            await Table.findByIdAndUpdate(order.tableId, {
+                status: "available"
+            });
+        }
+
         await order.save();
 
-        //table khali thai gyu che new customer aavi jai
-        await Table.findByIdAndUpdate(order.tableId, {
-            status: "available"
-        });
+
         res.status(201).json({ message: "Payment successful", payment });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Payment failed"  });
+        res.status(500).json({ message: "Payment failed" });
     }
 }
 
