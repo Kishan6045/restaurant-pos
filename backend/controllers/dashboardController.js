@@ -170,7 +170,7 @@ const dashboardOverview = async (req, res) => {
 
             /* ================= ORDER STATUS COUNTS ================= */
 
-            // Group orders by status (open / billed / closed)
+            // Group orders by status (open / billed / completed / closed)
             Order.aggregate([
                 { $match: { createdAt: { $gte: start, $lte: end } } },
                 {
@@ -255,7 +255,7 @@ const paymentSummary = { cash: 0, upi: 0, card: 0 };
 /* ================= ORDER STATUS NORMALIZATION ================= */
 
 // Ensure UI always receives all statuses
-const ORDER_STATUSES = ["open", "billed", "closed"];
+const ORDER_STATUSES = ["open", "billed", "completed", "closed"];
 const orderStatusMap = {};
 
 // Convert aggregation array to map

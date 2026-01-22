@@ -32,7 +32,7 @@ const orderSchema = new mongoose.Schema({
     // overall order status
     orderStatus: {
         type: String,
-        enum: ["open", "billed", "closed"],
+        enum: ["open", "billed", "completed", "closed"],
         default: "open"
     },
 
