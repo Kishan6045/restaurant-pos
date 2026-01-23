@@ -54,6 +54,13 @@ const BillingScreen = () => {
     () => items.reduce((sum, item) => sum + item.quantity, 0),
     [items]
   );
+  const isPaid = order?.paymentStatus === "paid";
+
+  useEffect(() => {
+    if (order?.paymentMethod) {
+      setPaymentMethod(order.paymentMethod);
+    }
+  }, [order?.paymentMethod]);
 
   const formatMoney = (value) =>
     new Intl.NumberFormat("en-IN", {
@@ -75,7 +82,15 @@ const BillingScreen = () => {
         method: paymentMethod,
       });
       alert("Payment successful");
-      navigate("/cashier/tables");
+      setOrder((prev) =>
+        prev
+          ? {
+            ...prev,
+            paymentStatus: "paid",
+            paymentMethod,
+          }
+          : prev
+      );
     } catch (err) {
       alert("Payment failed");
     } finally {
@@ -120,10 +135,24 @@ const BillingScreen = () => {
               Table T-{order.tableId?.tableNumber || tableId}
             </h1>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
-            {itemCount} items • Open
+          <div
+            className={`flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold ${isPaid
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-amber-200 bg-amber-50 text-amber-700"
+              }`}
+          >
+            {itemCount} items • {isPaid ? "Paid" : "Open"}
           </div>
         </header>
+
+        {isPaid && (
+          <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            Payment received
+            {order.paymentMethod
+              ? ` via ${order.paymentMethod.toUpperCase()}.`
+              : "."}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <section className="lg:col-span-2">
@@ -194,6 +223,29 @@ const BillingScreen = () => {
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <h3 className="text-sm font-semibold text-slate-900">
+                Payment Status
+              </h3>
+              <div className="mt-3 flex items-center justify-between text-sm">
+                <span className="text-slate-600">Status</span>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${isPaid
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-amber-100 text-amber-700"
+                    }`}
+                >
+                  {isPaid ? "Paid" : "Pending"}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-sm text-slate-600">
+                <span>Method</span>
+                <span className="font-semibold text-slate-900">
+                  {(order.paymentMethod || paymentMethod || "—").toUpperCase()}
+                </span>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <h3 className="text-sm font-semibold text-slate-900">
                 Payment Method
               </h3>
               <div className="mt-3 grid grid-cols-3 gap-2">
@@ -201,10 +253,11 @@ const BillingScreen = () => {
                   <button
                     key={method}
                     onClick={() => setPaymentMethod(method)}
+                    disabled={isPaid || paying}
                     className={`rounded-lg border px-2 py-2 text-xs font-semibold uppercase transition ${paymentMethod === method
                       ? "border-slate-900 bg-slate-900 text-white"
                       : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                      }`}
+                      } ${isPaid || paying ? "cursor-not-allowed opacity-60" : ""}`}
                   >
                     {method}
                   </button>
@@ -212,13 +265,13 @@ const BillingScreen = () => {
               </div>
               <button
                 onClick={handlePayment}
-                disabled={paying}
-                className={`mt-4 w-full rounded-xl py-3 text-sm font-bold text-white transition ${paying
+                disabled={paying || isPaid}
+                className={`mt-4 w-full rounded-xl py-3 text-sm font-bold text-white transition ${paying || isPaid
                   ? "bg-slate-300"
                   : "bg-emerald-600 hover:bg-emerald-700"
                   }`}
               >
-                {paying ? "Processing..." : "Pay & Close"}
+                {isPaid ? "Paid" : paying ? "Processing..." : "Pay & Close"}
               </button>
             </div>
           </aside>
