@@ -8,8 +8,6 @@ const STATUS_COLOR = {
   preparing: "bg-orange-100 text-orange-800",
   ready: "bg-green-100 text-green-800",
 };
-const ACTIVE_ORDER_STATUSES = new Set(["open", "billed"]);
-
 const LiveOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,16 +21,7 @@ const LiveOrders = () => {
         ? res.data
         : res.data.orders || [];
 
-      // 🔥 sirf LIVE items filter (same as kitchen)
-      const liveOnly = data.filter(
-        (o) =>
-          ACTIVE_ORDER_STATUSES.has(o.orderStatus) &&
-          o.items?.some((i) =>
-            ["pending", "preparing"].includes(i.status)
-          )
-      );
-
-      setOrders(liveOnly);
+      setOrders(data);
     } catch (err) {
       console.error("Admin live orders error:", err);
     } finally {
@@ -49,7 +38,7 @@ const LiveOrders = () => {
   if (loading) {
     return <Loader label="Loading live orders..." containerClassName="p-6" />;
   } if (orders.length === 0)
-    return <div className="p-6">No live orders</div>;
+    return <div className="p-6">No orders found</div>;
 
   return (
     <div className="p-4 max-w-5xl mx-auto space-y-4">
@@ -71,24 +60,18 @@ const LiveOrders = () => {
             <div className="font-semibold text-gray-800">
               Table T-{order.tableId?.tableNumber || "-"}
               <span className="ml-2 text-xs text-gray-500">
-                {order.items.filter(i =>
-                  ["pending", "preparing"].includes(i.status)
-                ).length} items
+                {(order.items || []).length} items
               </span>
             </div>
 
             <span className="text-xs text-gray-400">
-              OPEN
+              {(order.orderStatus || "open").toUpperCase()}
             </span>
           </div>
 
           {/* ITEMS LIST (SCROLLABLE) */}
           <div className="max-h-64 overflow-y-auto divide-y">
-            {order.items
-              .filter((i) =>
-                ["pending", "preparing"].includes(i.status)
-              )
-              .map((item) => (
+            {(order.items || []).map((item) => (
                 <div
                   key={item._id}
                   className="flex items-center justify-between px-4 py-3 text-sm"
@@ -103,11 +86,11 @@ const LiveOrders = () => {
                   </div>
 
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold
-                    ${STATUS_COLOR[item.status]}
-                  `}
+                    className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      STATUS_COLOR[item.status] || "bg-slate-100 text-slate-700"
+                    }`}
                   >
-                    {item.status.toUpperCase()}
+                    {(item.status || "unknown").toUpperCase()}
                   </span>
                 </div>
               ))}
