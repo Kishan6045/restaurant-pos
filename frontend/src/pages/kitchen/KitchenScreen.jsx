@@ -35,7 +35,12 @@ const KitchenScreen = () => {
             items,
           };
         })
-        .filter((order) => order.items.length > 0);
+        .filter((order) => order.items.length > 0)
+        .sort((a, b) => {
+          const aTime = new Date(a.createdAt || 0).getTime();
+          const bTime = new Date(b.createdAt || 0).getTime();
+          return aTime - bTime;
+        });
 
       setOrders(normalized);
       setLastUpdated(new Date());
