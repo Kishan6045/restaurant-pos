@@ -50,7 +50,10 @@ const createPermissions = async () => {
             Object.entries(DEFAULT_PERMISSIONS).map(([role, permissions]) =>
                 Permission.updateOne(
                     { role },
-                    { $setOnInsert: { role, permissions } },
+                    {
+                        $setOnInsert: { role },
+                        $addToSet: { permissions: { $each: permissions } }
+                    },
                     { upsert: true }
                 )
             )

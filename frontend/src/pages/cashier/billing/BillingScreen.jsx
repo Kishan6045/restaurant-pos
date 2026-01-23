@@ -26,7 +26,11 @@ const BillingScreen = () => {
 
       setOrder(openOrder || null);
     } catch (err) {
-      alert("Failed to load order");
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Failed to load order";
+      alert(message);
     } finally {
       setLoading(false);
     }
