@@ -8,6 +8,7 @@ const STATUS_COLOR = {
   preparing: "bg-orange-100 text-orange-800",
   ready: "bg-green-100 text-green-800",
 };
+const ACTIVE_ORDER_STATUSES = new Set(["open", "billed"]);
 
 const LiveOrders = () => {
   const [orders, setOrders] = useState([]);
