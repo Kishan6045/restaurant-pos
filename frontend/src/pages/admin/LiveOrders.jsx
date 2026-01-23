@@ -1,23 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../../utils/axios";
 import Loader from "../../components/Loader";
 
 const ACTIVE_ORDER_STATUSES = new Set(["open", "billed"]);
 const ACTIVE_ITEM_STATUSES = new Set(["pending", "preparing"]);
-const STAT_TONES = {
-  slate: {
-    label: "text-slate-500",
-    value: "text-slate-900",
-  },
-  emerald: {
-    label: "text-emerald-500",
-    value: "text-emerald-700",
-  },
-  amber: {
-    label: "text-amber-500",
-    value: "text-amber-700",
-  },
-};
 const LIVE_BADGE = {
   active: "bg-emerald-100 text-emerald-700",
   idle: "bg-slate-100 text-slate-600",
@@ -127,16 +113,6 @@ const LiveOrders = () => {
     return () => clearInterval(t);
   }, []);
 
-  const totalLiveQty = useMemo(
-    () => menuItems.reduce((sum, item) => sum + (item.liveQty || 0), 0),
-    [menuItems]
-  );
-
-  const activeItemCount = useMemo(
-    () => menuItems.filter((item) => (item.liveQty || 0) > 0).length,
-    [menuItems]
-  );
-
   const formatTime = (value) => {
     if (!value) return "-";
     const d = value instanceof Date ? value : new Date(value);
@@ -171,17 +147,6 @@ const LiveOrders = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat label="Menu items" value={menuItems.length} tone="slate" />
-        <Stat label="Items ordered" value={activeItemCount} tone="emerald" />
-        <Stat label="Live quantity" value={totalLiveQty} tone="amber" />
-        <Stat
-          label="Idle items"
-          value={menuItems.length - activeItemCount}
-          tone="slate"
-        />
-      </div>
-
       <div className="grid gap-3">
         {menuItems.map((item) => {
           const isActive = (item.liveQty || 0) > 0;
@@ -192,31 +157,19 @@ const LiveOrders = () => {
                 isActive ? "border-emerald-200 bg-emerald-50/40" : ""
               }`}
             >
-              <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">
+                  <p className="text-base font-semibold text-slate-900">
                     {item.name}
                   </p>
                   <p className="text-xs text-slate-500">
                     {item.category?.name || "-"}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-slate-500">Live orders</p>
-                  <p className="text-lg font-semibold text-slate-900">
-                    {item.liveQty || 0}
-                  </p>
+                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                  <span className="text-emerald-600">🔥</span>
+                  <span>{item.liveQty || 0} orders</span>
                 </div>
-              </div>
-
-              <div className="mt-3">
-                <span
-                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                    isActive ? LIVE_BADGE.active : LIVE_BADGE.idle
-                  }`}
-                >
-                  {isActive ? "ORDERED" : "IDLE"}
-                </span>
               </div>
 
               {isActive ? (
@@ -228,24 +181,20 @@ const LiveOrders = () => {
                   ))}
                 </ul>
               ) : (
-                <p className="mt-3 text-xs text-slate-500">
-                  No live orders yet.
-                </p>
+                <div className="mt-3">
+                  <span
+                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                      LIVE_BADGE.idle
+                    }`}
+                  >
+                    No live orders yet
+                  </span>
+                </div>
               )}
             </div>
           );
         })}
       </div>
-    </div>
-  );
-};
-
-const Stat = ({ label, value, tone }) => {
-  const style = STAT_TONES[tone] || STAT_TONES.slate;
-  return (
-    <div className="rounded-xl border bg-white p-4">
-      <p className={`text-xs uppercase ${style.label}`}>{label}</p>
-      <p className={`mt-1 text-2xl font-semibold ${style.value}`}>{value}</p>
     </div>
   );
 };
