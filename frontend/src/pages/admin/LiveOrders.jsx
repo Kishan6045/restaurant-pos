@@ -47,11 +47,15 @@ const LiveOrders = () => {
           .filter((product) => product.name)
           .map((product) => [product.name.toLowerCase(), product._id])
       );
-      const liveQtyById = new Map();
+      const liveSummaryById = new Map();
 
       orders
         .filter((order) => ACTIVE_ORDER_STATUSES.has(order.orderStatus))
         .forEach((order) => {
+          const tableNumber =
+            order.tableId?.tableNumber ?? order.tableId ?? "Unknown";
+          const tableLabel = `T${tableNumber}`;
+
           (order.items || []).forEach((item) => {
             if (!ACTIVE_ITEM_STATUSES.has(item.status)) return;
             const productId =
@@ -59,8 +63,21 @@ const LiveOrders = () => {
               item.productId ||
               (item.name ? nameLookup.get(item.name.toLowerCase()) : null);
             if (!productId) return;
+
             const qty = Number(item.quantity || 0);
-            liveQtyById.set(productId, (liveQtyById.get(productId) || 0) + qty);
+            if (!liveSummaryById.has(productId)) {
+              liveSummaryById.set(productId, {
+                totalQty: 0,
+                tables: new Map(),
+              });
+            }
+
+            const summary = liveSummaryById.get(productId);
+            summary.totalQty += qty;
+            summary.tables.set(
+              tableLabel,
+              (summary.tables.get(tableLabel) || 0) + qty
+            );
           });
         });
 
@@ -73,10 +90,26 @@ const LiveOrders = () => {
         return (a.name || "").localeCompare(b.name || "");
       });
 
-      const rows = sortedMenu.map((product) => ({
-        ...product,
-        liveQty: liveQtyById.get(product._id) || 0,
-      }));
+      const rows = sortedMenu.map((product) => {
+        const summary = liveSummaryById.get(product._id) || {
+          totalQty: 0,
+          tables: new Map(),
+        };
+        const tableBreakdown = Array.from(summary.tables.entries())
+          .map(([table, qty]) => ({
+            table,
+            qty,
+          }))
+          .sort((a, b) => a.table.localeCompare(b.table, undefined, {
+            numeric: true,
+          }));
+
+        return {
+          ...product,
+          liveQty: summary.totalQty,
+          tableBreakdown,
+        };
+      });
 
       setMenuItems(rows);
       setLastUpdated(new Date());
@@ -149,47 +182,59 @@ const LiveOrders = () => {
         />
       </div>
 
-      <div className="overflow-hidden rounded-xl border bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-            <tr>
-              <th className="p-3 text-left">Item</th>
-              <th className="p-3 text-left">Category</th>
-              <th className="p-3 text-right">Live qty</th>
-              <th className="p-3 text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {menuItems.map((item) => {
-              const isActive = (item.liveQty || 0) > 0;
-              return (
-                <tr
-                  key={item._id}
-                  className={`border-t ${isActive ? "bg-emerald-50/40" : ""}`}
-                >
-                  <td className="p-3 font-medium text-slate-800">
+      <div className="grid gap-3">
+        {menuItems.map((item) => {
+          const isActive = (item.liveQty || 0) > 0;
+          return (
+            <div
+              key={item._id}
+              className={`rounded-xl border bg-white p-4 ${
+                isActive ? "border-emerald-200 bg-emerald-50/40" : ""
+              }`}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">
                     {item.name}
-                  </td>
-                  <td className="p-3 text-slate-500">
+                  </p>
+                  <p className="text-xs text-slate-500">
                     {item.category?.name || "-"}
-                  </td>
-                  <td className="p-3 text-right font-semibold tabular-nums">
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-slate-500">Live orders</p>
+                  <p className="text-lg font-semibold text-slate-900">
                     {item.liveQty || 0}
-                  </td>
-                  <td className="p-3">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        isActive ? LIVE_BADGE.active : LIVE_BADGE.idle
-                      }`}
-                    >
-                      {isActive ? "ORDERED" : "IDLE"}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <span
+                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                    isActive ? LIVE_BADGE.active : LIVE_BADGE.idle
+                  }`}
+                >
+                  {isActive ? "ORDERED" : "IDLE"}
+                </span>
+              </div>
+
+              {isActive ? (
+                <ul className="mt-3 space-y-1 text-sm text-slate-700">
+                  {item.tableBreakdown.map((entry) => (
+                    <li key={`${item._id}-${entry.table}`}>
+                      - {entry.table} ({entry.qty})
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-xs text-slate-500">
+                  No live orders yet.
+                </p>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
