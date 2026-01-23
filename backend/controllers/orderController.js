@@ -278,8 +278,9 @@ exports.getOrders = async (req, res) => {
     // filter based on role
 
     if (req.user.role === "kitchen") {
+      // Show any order that still has pending/preparing items
+      // even if it was billed early.
       filter = {
-        orderStatus: "open",
         "items.status": { $in: ["pending", "preparing"] }
       };
     }

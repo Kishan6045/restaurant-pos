@@ -9,6 +9,8 @@ const STATUS_COLOR = {
   ready: "bg-green-100 text-green-800",
 };
 
+const ACTIVE_ORDER_STATUSES = new Set(["open", "billed"]);
+
 const LiveOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +27,7 @@ const LiveOrders = () => {
       // 🔥 sirf LIVE items filter (same as kitchen)
       const liveOnly = data.filter(
         (o) =>
-          o.orderStatus === "open" &&
+          ACTIVE_ORDER_STATUSES.has(o.orderStatus) &&
           o.items?.some((i) =>
             ["pending", "preparing"].includes(i.status)
           )
