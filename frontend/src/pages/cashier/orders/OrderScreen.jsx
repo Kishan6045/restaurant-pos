@@ -13,6 +13,7 @@ import SearchAndCategories from "./SearchAndCategories";
 const PAGE_SIZE = 24; // Pagination size
 
 const ALL_CATEGORY = "all"; // Special value for all categories
+const FINAL_ORDER_STATUSES = new Set(["completed", "closed"]);
 
 const OrderScreen = () => {
   const { tableId } = useParams();  // Get tableId from URL
@@ -70,7 +71,7 @@ const OrderScreen = () => {
       const openOrder = (res.data || []).find(
         (o) =>
           o.tableId?._id === tableId &&
-          o.orderStatus !== "completed"
+          !FINAL_ORDER_STATUSES.has(o.orderStatus)
       );
 
       setExistingOrder(openOrder || null);
@@ -197,6 +198,10 @@ const OrderScreen = () => {
 
   // Go to billing page
   const handleBilling = () => {
+    if (!existingOrder) {
+      alert("No active order to bill");
+      return;
+    }
     navigate(`/cashier/billing/${tableId}`);
   };
 
@@ -242,6 +247,7 @@ const OrderScreen = () => {
         onBack={handleBack}
         onBilling={handleBilling}
         onOpenCart={() => setIsCartOpen(true)}
+        billingDisabled={!existingOrder}
       >
         {/* Search and category filter */}
         <SearchAndCategories
@@ -257,7 +263,17 @@ const OrderScreen = () => {
       <main className="mx-auto w-full max-w-7xl px-4 py-4">
         {/* Mobile actions */}
         <div className="mb-4 flex flex-wrap items-center gap-2 md:hidden">
-          <button onClick={handleBilling}>Billing</button>
+          <button
+            onClick={handleBilling}
+            className={`rounded border px-3 py-1 text-sm font-semibold ${
+              existingOrder
+                ? "border-slate-200 text-slate-700"
+                : "border-slate-200 text-slate-400"
+            }`}
+            disabled={!existingOrder}
+          >
+            Billing
+          </button>
 
           {existingOrder && (
             <div className="flex items-center gap-2">

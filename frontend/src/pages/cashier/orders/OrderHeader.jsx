@@ -9,10 +9,11 @@ const OrderHeader = ({
   onBilling,      // Billing button handler
   onOpenCart,     // Open mobile cart drawer
   children,       // Search & category section
+  billingDisabled = false,
 }) => {
   return (
     // Sticky header at top
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white">
+    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white">
       {/* Container */}
       <div className="mx-auto w-full max-w-7xl px-4 py-3">
 
@@ -59,7 +60,12 @@ const OrderHeader = ({
             {/* Billing button (desktop only) */}
             <button
               onClick={onBilling} // Go to billing page
-              className="hidden md:inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+              disabled={billingDisabled}
+              className={`hidden md:inline-flex items-center rounded-md px-3 py-1.5 text-xs font-semibold ${
+                billingDisabled
+                  ? "cursor-not-allowed bg-slate-200 text-slate-500"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
             >
               Billing
             </button>
