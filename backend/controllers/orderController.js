@@ -279,7 +279,6 @@ exports.getOrders = async (req, res) => {
 
     if (req.user.role === "kitchen") {
       filter = {
-        orderStatus: "open",
         "items.status": { $in: ["pending", "preparing"] }
       };
     }

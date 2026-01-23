@@ -13,7 +13,8 @@ const toYMD = (date) => {
     const dd = String(d.getDate()).padStart(2, 0);
     return `${yyyy}-${mm}-${dd}`;
 }
-
+const normalizeOrderStatus = (status) =>
+    status === "closed" ? "completed" : status;
 // URL: GET /api/admin/overview?from=YYYY-MM-DD&to=YYYY-MM-DD
 //Permission: dashboard.read
 const dashboardOverview = async (req, res) => {
@@ -84,7 +85,7 @@ const dashboardOverview = async (req, res) => {
             salesGraphRaw,        // Daily sales data
             topItems,             // Top selling items
             recentOrders,         // Recent orders list
-     ] = await Promise.all([
+        ] = await Promise.all([
             /* ================= ORDER COUNTS ================= */
 
             // Count all orders within selected date range
@@ -101,11 +102,11 @@ const dashboardOverview = async (req, res) => {
                 paymentStatus: "unpaid",
                 createdAt: { $gte: start, $lte: end }
             }),
-         
 
-        /* ================= STAFF ================= */
-        // Count active cashier staff
-        User.countDocuments({ role: "cashier", isActive: true }),
+
+            /* ================= STAFF ================= */
+            // Count active cashier staff
+            User.countDocuments({ role: "cashier", isActive: true }),
 
 
             /* ================= TABLES ================= */
@@ -170,12 +171,23 @@ const dashboardOverview = async (req, res) => {
 
             /* ================= ORDER STATUS COUNTS ================= */
 
-            // Group orders by status (open / billed / closed)
+            // Group orders by status (open / billed // completed)
             Order.aggregate([
                 { $match: { createdAt: { $gte: start, $lte: end } } },
                 {
+                    $addFields: {
+                        normalizedStatus: {
+                            $cond: [
+                                { $eq: ["$orderStatus", "closed"] },
+                                "completed",
+                                "$orderStatus"
+                            ]
+                        }
+                    }
+                },
+                {
                     $group: {
-                        _id: "$orderStatus",
+                        _id: "$normalizedStatus",
                         count: { $sum: 1 }
                     }
                 }
@@ -235,133 +247,133 @@ const dashboardOverview = async (req, res) => {
                 .lean(),
         ]);
 
-/* ================= POST PROCESSING ================= */
+        /* ================= POST PROCESSING ================= */
 
-// Safely extract total sales value
-const totalSales = totalSalesAgg?.[0]?.total || 0;
+        // Safely extract total sales value
+        const totalSales = totalSalesAgg?.[0]?.total || 0;
 
-// Default payment summary structure
-const paymentSummary = { cash: 0, upi: 0, card: 0 };
+        // Default payment summary structure
+        const paymentSummary = { cash: 0, upi: 0, card: 0 };
 
-// Fill payment summary from aggregation result
-(payments || []).forEach(p => {
-    if (p && p._id) {
-        paymentSummary[p._id] = p.total;
-    }
-});
-
-
-
-/* ================= ORDER STATUS NORMALIZATION ================= */
-
-// Ensure UI always receives all statuses
-const ORDER_STATUSES = ["open", "billed", "closed"];
-const orderStatusMap = {};
-
-// Convert aggregation array to map
-(orderStatusRaw || []).forEach(s => {
-    if (s && s._id) {
-        orderStatusMap[s._id] = s.count || 0;
-    }
-});
-
-// Create normalized array (no missing statuses)
-const orderStatusNormalized = ORDER_STATUSES.map(s => ({
-    _id: s,
-    count: orderStatusMap[s] || 0
-}));
-
-/* ================= SALES GRAPH (RANGE BASED) ================= */
-const salesGraph = salesGraphRaw.map(d => ({
-    date: d._id.day,
-    amount: d.total
-}));
-
-
-// Fill missing dates (keeps line chart continuous).
-// To avoid heavy computation on huge custom ranges, only fill up to 370 days.
-const startDay = new Date(new Date(start).setHours(0, 0, 0, 0));
-const endDay = new Date(new Date(end).setHours(0, 0, 0, 0));
-const diffDays = Math.floor((endDay - startDay) / (1000 * 60 * 60 * 24)) + 1;
-let salesGraphFilled = salesGraph;
-if (diffDays > 0 && diffDays <= 370) {
-    const salesMap = new Map(salesGraph.map((d) => [d.date, d.amount || 0]));
-    const filled = [];
-    const cur = new Date(startDay);
-    while (cur <= endDay) {
-        const key = toYMD(cur);
-        filled.push({ date: key, amount: salesMap.get(key) || 0 });
-        cur.setDate(cur.getDate() + 1);
-    }
-    salesGraphFilled = filled;
-}
-
-
-/* ================= TABLES BY FLOOR ================= */
-const tablesByFloor = (tables || []).reduce((acc, t) => {
-    const floor = t.floor || "Ground";
-    if (!acc[floor]) acc[floor] = { total: 0, occupied: 0, available: 0 };
-    acc[floor].total += 1;
-    if (t.status === "occupied") acc[floor].occupied += 1;
-    else acc[floor].available += 1;
-    return acc;
-}, {});
-
-
-/* ================= FINAL RESPONSE ================= */
-res.json({
-    range: {
-        from: start,
-        to: end
-    },
-    preset: preset || null,
-    totalSales,
-    totalOrders,
-    OrdersSummary: {
-        paid: paidOrders,
-        unpaid: unpaidOrders,
-    },
-    orderStatus: orderStatusNormalized,
-    tableSummary: {
-        total: totalTables,
-        occupied: occupiedTables,
-        available: availableTables,
-    },
-    tablesByFloor,
-    tables,
-    staffOnDuty,
-    menuSummary: {
-        Product: { total: totalProducts, active: activeProducts },
-        categories: { total: totalCategories, active: activeCategories },
-    },
-    paymentSummary,
-
-    salesGraph: salesGraphFilled,
-    topItems,
-    recentOrders: (recentOrders || []).map(o => ({
-        _id: o._id,
-        createdAt: o.createdAt,
-        table: o.tableId
-            ? {
-                _id: o.tableId._id,
-                tableNumber: o.tableId.tableNumber,
-                floor: o.tableId.floor,
+        // Fill payment summary from aggregation result
+        (payments || []).forEach(p => {
+            if (p && p._id) {
+                paymentSummary[p._id] = p.total;
             }
-            : null,
-            orderStatus: o.orderStatus,
-            paymentStatus: o.paymentStatus,
-            paymentMethod: o.paymentMethod || null,
-            totalAmount: o.totalAmount,
-            itemsCount: Array.isArray(o.items)
-            ? o.items.reduce((sum,it) => sum + (it.quantity || 0), 0)
-            : 0,
-    }))
-});
+        });
+
+
+
+        /* ================= ORDER STATUS NORMALIZATION ================= */
+
+        // Ensure UI always receives all statuses
+        const ORDER_STATUSES = ["open", "billed", "completed"];
+        const orderStatusMap = {};
+
+        // Convert aggregation array to map
+        (orderStatusRaw || []).forEach(s => {
+            if (s && s._id) {
+                orderStatusMap[s._id] = s.count || 0;
+            }
+        });
+
+        // Create normalized array (no missing statuses)
+        const orderStatusNormalized = ORDER_STATUSES.map(s => ({
+            _id: s,
+            count: orderStatusMap[s] || 0
+        }));
+
+        /* ================= SALES GRAPH (RANGE BASED) ================= */
+        const salesGraph = salesGraphRaw.map(d => ({
+            date: d._id.day,
+            amount: d.total
+        }));
+
+
+        // Fill missing dates (keeps line chart continuous).
+        // To avoid heavy computation on huge custom ranges, only fill up to 370 days.
+        const startDay = new Date(new Date(start).setHours(0, 0, 0, 0));
+        const endDay = new Date(new Date(end).setHours(0, 0, 0, 0));
+        const diffDays = Math.floor((endDay - startDay) / (1000 * 60 * 60 * 24)) + 1;
+        let salesGraphFilled = salesGraph;
+        if (diffDays > 0 && diffDays <= 370) {
+            const salesMap = new Map(salesGraph.map((d) => [d.date, d.amount || 0]));
+            const filled = [];
+            const cur = new Date(startDay);
+            while (cur <= endDay) {
+                const key = toYMD(cur);
+                filled.push({ date: key, amount: salesMap.get(key) || 0 });
+                cur.setDate(cur.getDate() + 1);
+            }
+            salesGraphFilled = filled;
+        }
+
+
+        /* ================= TABLES BY FLOOR ================= */
+        const tablesByFloor = (tables || []).reduce((acc, t) => {
+            const floor = t.floor || "Ground";
+            if (!acc[floor]) acc[floor] = { total: 0, occupied: 0, available: 0 };
+            acc[floor].total += 1;
+            if (t.status === "occupied") acc[floor].occupied += 1;
+            else acc[floor].available += 1;
+            return acc;
+        }, {});
+
+
+        /* ================= FINAL RESPONSE ================= */
+        res.json({
+            range: {
+                from: start,
+                to: end
+            },
+            preset: preset || null,
+            totalSales,
+            totalOrders,
+            OrdersSummary: {
+                paid: paidOrders,
+                unpaid: unpaidOrders,
+            },
+            orderStatus: orderStatusNormalized,
+            tableSummary: {
+                total: totalTables,
+                occupied: occupiedTables,
+                available: availableTables,
+            },
+            tablesByFloor,
+            tables,
+            staffOnDuty,
+            menuSummary: {
+                Product: { total: totalProducts, active: activeProducts },
+                categories: { total: totalCategories, active: activeCategories },
+            },
+            paymentSummary,
+
+            salesGraph: salesGraphFilled,
+            topItems,
+            recentOrders: (recentOrders || []).map(o => ({
+                _id: o._id,
+                createdAt: o.createdAt,
+                table: o.tableId
+                    ? {
+                        _id: o.tableId._id,
+                        tableNumber: o.tableId.tableNumber,
+                        floor: o.tableId.floor,
+                    }
+                    : null,
+                orderStatus: normalizeOrderStatus(o.orderStatus),
+                paymentStatus: o.paymentStatus,
+                paymentMethod: o.paymentMethod || null,
+                totalAmount: o.totalAmount,
+                itemsCount: Array.isArray(o.items)
+                    ? o.items.reduce((sum, it) => sum + (it.quantity || 0), 0)
+                    : 0,
+            }))
+        });
 
     } catch (error) {
-    console.error("Dashboard Overview Error:", error);
-    res.status(500).json({ message: "Dashboard load failed" });
-}
+        console.error("Dashboard Overview Error:", error);
+        res.status(500).json({ message: "Dashboard load failed" });
+    }
 };
 
 module.exports = { dashboardOverview };

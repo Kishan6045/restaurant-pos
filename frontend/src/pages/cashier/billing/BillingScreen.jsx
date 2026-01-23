@@ -20,7 +20,7 @@ const BillingScreen = () => {
       const openOrder = (res.data || []).find(
         (o) =>
           o.tableId?._id === tableId &&
-          o.orderStatus !== "completed"
+          !FINAL_ORDER_STATUSES.has(o.orderStatus)
       );
 
       setOrder(openOrder || null);

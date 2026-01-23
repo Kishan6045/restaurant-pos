@@ -20,15 +20,16 @@ module.exports = async (req, res, next) => {
         const permission = await Permission.findOne({
             role: decoded.role
         });
-        if (!permission) {
-            return res.status(403).json({ message: "Permissions not found" });
-        }
+        // If permissions are not seeded yet, allow auth to proceed
+        // with an empty permissions array so admin can configure.
+        const permissions = permission?.permissions || [];
 
-    // attach user + permissions ARRAY
+
+        // attach user + permissions ARRAY
         req.user = {
             id: decoded.id,
             role: decoded.role,
-            permissions: permission?.permissions || []
+            permissions
         };
         next();
     } catch (error) {

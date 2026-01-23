@@ -25,7 +25,7 @@ const LiveOrders = () => {
       // 🔥 sirf LIVE items filter (same as kitchen)
       const liveOnly = data.filter(
         (o) =>
-          o.orderStatus === "open" &&
+          ACTIVE_ORDER_STATUSES.has(o.orderStatus) &&
           o.items?.some((i) =>
             ["pending", "preparing"].includes(i.status)
           )
@@ -45,9 +45,9 @@ const LiveOrders = () => {
     return () => clearInterval(t);
   }, []);
 
-if (loading) {
+  if (loading) {
     return <Loader label="Loading live orders..." containerClassName="p-6" />;
-  }  if (orders.length === 0)
+  } if (orders.length === 0)
     return <div className="p-6">No live orders</div>;
 
   return (
