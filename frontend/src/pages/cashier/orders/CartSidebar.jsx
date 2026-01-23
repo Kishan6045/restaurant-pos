@@ -14,6 +14,7 @@ const CartSidebar = ({
   onSendToKitchen,   // Send order to kitchen handler
   sending,           // Loading state while sending order
   onBilling,         // Go to billing handler
+  billingDisabled = false,
 }) => {
   return (
     // Sidebar visible only on large screens
@@ -183,7 +184,12 @@ const CartSidebar = ({
                 {/* Billing button */}
                 <button
                   onClick={onBilling}
-                  className="w-full rounded-md border border-blue-600 px-3 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-50"
+                  disabled={billingDisabled}
+                  className={`w-full rounded-md border px-3 py-2.5 text-sm font-semibold ${
+                    billingDisabled
+                      ? "cursor-not-allowed border-slate-200 text-slate-400"
+                      : "border-blue-600 text-blue-600 hover:bg-blue-50"
+                  }`}
                 >
                   Billing
                 </button>

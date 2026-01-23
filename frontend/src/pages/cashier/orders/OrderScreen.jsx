@@ -309,6 +309,7 @@ const OrderScreen = () => {
             onSendToKitchen={sendToKitchen}
             sending={sending}
             onBilling={handleBilling}
+            billingDisabled={!existingOrder}
           />
         </div>
       </main>
