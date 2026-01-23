@@ -216,35 +216,33 @@ const KitchenScreen = () => {
               No pending or preparing items
             </div>
           ) : (
-            <div className="p-4 space-y-3">
-              {menuItems.map((item) => (
-                <div
-                  key={item.key}
-                  className="rounded-xl border border-slate-200 bg-white p-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="text-base font-semibold text-slate-900">
+            <div className="max-h-[70vh] overflow-y-auto p-4">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {menuItems.map((item) => (
+                  <div
+                    key={item.key}
+                    className="rounded-lg border border-slate-200 bg-white p-3"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-slate-900">
                         {item.name}
                       </p>
+                      <div className="text-xs font-semibold text-slate-900">
+                        🔥 {item.totalQty}
+                      </div>
                     </div>
-                    <div className="text-sm font-semibold text-slate-900">
-                      🔥 {item.totalQty} orders
-                    </div>
-                  </div>
 
-                  <ul className="mt-3 space-y-2 text-sm text-slate-700">
-                    {item.tableBreakdown.map((table) => (
-                      <li
-                        key={table.key}
-                        className="flex flex-wrap items-center justify-between gap-2"
-                      >
-                        <span>
-                          - {table.table} ({table.qty})
-                        </span>
-                        <div className="flex items-center gap-2">
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-700">
+                      {item.tableBreakdown.map((table) => (
+                        <div
+                          key={table.key}
+                          className="flex items-center gap-2 rounded-full border border-slate-200 px-2 py-1"
+                        >
+                          <span>
+                            {table.table} ({table.qty})
+                          </span>
                           <span
-                            className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                               STATUS_STYLES[table.status] ||
                               "bg-slate-100 text-slate-600"
                             }`}
@@ -253,10 +251,8 @@ const KitchenScreen = () => {
                           </span>
                           {table.status === "pending" && (
                             <button
-                              onClick={() =>
-                                updateStatus(table, "preparing")
-                              }
-                              className="rounded-full bg-orange-500 px-3 py-1 text-xs font-semibold text-white hover:bg-orange-600"
+                              onClick={() => updateStatus(table, "preparing")}
+                              className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-orange-600"
                             >
                               Start
                             </button>
@@ -264,17 +260,17 @@ const KitchenScreen = () => {
                           {table.status === "preparing" && (
                             <button
                               onClick={() => updateStatus(table, "ready")}
-                              className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                              className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-emerald-700"
                             >
                               Ready
                             </button>
                           )}
                         </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
