@@ -111,7 +111,8 @@ api.interceptors.response.use(
                 processQueue(err, null);
                 // refresh token bhi expire → logout
                 // ❗ Sirf tab logout jab refresh token hi invalid ho
-                if (err.response?.status === 401 && !isRefreshing) {
+                if (err.response?.status === 401) {
+                    localStorage.clear();
                     window.location.href = "/login";
                 }
                 return Promise.reject(err);

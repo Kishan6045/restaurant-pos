@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import ProfileDropdown from "../../components/ProfileDropdown";
 import api from "../../utils/axios";
 
@@ -6,8 +6,6 @@ const KitchenScreen = () => {
   const [rows, setRows] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
-  const knownIds = useRef(new Set());
-
   // ================= FETCH & MERGE =================
   const fetchAndMerge = async () => {
     setIsRefreshing(true);
@@ -25,9 +23,6 @@ const KitchenScreen = () => {
           if (!["pending", "preparing"].includes(item.status)) return;
 
           const key = `${order._id}_${item._id}`;
-          if (knownIds.current.has(key)) return;
-
-          knownIds.current.add(key);
 
           newRows.push({
             key,
@@ -42,9 +37,7 @@ const KitchenScreen = () => {
         });
       });
 
-      if (newRows.length) {
-        setRows((prev) => [...newRows, ...prev]);
-      }
+      setRows(newRows);
 
       setLastUpdated(new Date());
     } catch (err) {

@@ -32,7 +32,8 @@ const orderSchema = new mongoose.Schema({
     // overall order status
     orderStatus: {
         type: String,
-        enum: ["open", "billed", "closed"],
+        // "completed" is the current final status; keep "closed" for legacy data
+        enum: ["open", "billed", "completed", "closed"],
         default: "open"
     },
 

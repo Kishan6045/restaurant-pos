@@ -14,6 +14,9 @@ const toYMD = (date) => {
     return `${yyyy}-${mm}-${dd}`;
 }
 
+const normalizeOrderStatus = (status) =>
+    status === "closed" ? "completed" : status;
+
 // URL: GET /api/admin/overview?from=YYYY-MM-DD&to=YYYY-MM-DD
 //Permission: dashboard.read
 const dashboardOverview = async (req, res) => {
@@ -170,12 +173,23 @@ const dashboardOverview = async (req, res) => {
 
             /* ================= ORDER STATUS COUNTS ================= */
 
-            // Group orders by status (open / billed / closed)
+            // Group orders by status (open / billed / completed)
             Order.aggregate([
                 { $match: { createdAt: { $gte: start, $lte: end } } },
                 {
+                    $addFields: {
+                        normalizedStatus: {
+                            $cond: [
+                                { $eq: ["$orderStatus", "closed"] },
+                                "completed",
+                                "$orderStatus"
+                            ]
+                        }
+                    }
+                },
+                {
                     $group: {
-                        _id: "$orderStatus",
+                        _id: "$normalizedStatus",
                         count: { $sum: 1 }
                     }
                 }
@@ -255,7 +269,7 @@ const paymentSummary = { cash: 0, upi: 0, card: 0 };
 /* ================= ORDER STATUS NORMALIZATION ================= */
 
 // Ensure UI always receives all statuses
-const ORDER_STATUSES = ["open", "billed", "closed"];
+const ORDER_STATUSES = ["open", "billed", "completed"];
 const orderStatusMap = {};
 
 // Convert aggregation array to map
@@ -348,7 +362,7 @@ res.json({
                 floor: o.tableId.floor,
             }
             : null,
-            orderStatus: o.orderStatus,
+            orderStatus: normalizeOrderStatus(o.orderStatus),
             paymentStatus: o.paymentStatus,
             paymentMethod: o.paymentMethod || null,
             totalAmount: o.totalAmount,

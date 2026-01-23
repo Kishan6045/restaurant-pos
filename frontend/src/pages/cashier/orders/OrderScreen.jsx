@@ -13,6 +13,7 @@ import SearchAndCategories from "./SearchAndCategories";
 const PAGE_SIZE = 24; // Pagination size
 
 const ALL_CATEGORY = "all"; // Special value for all categories
+const FINAL_ORDER_STATUSES = new Set(["completed", "closed"]);
 
 const OrderScreen = () => {
   const { tableId } = useParams();  // Get tableId from URL
@@ -70,7 +71,7 @@ const OrderScreen = () => {
       const openOrder = (res.data || []).find(
         (o) =>
           o.tableId?._id === tableId &&
-          o.orderStatus !== "completed"
+          !FINAL_ORDER_STATUSES.has(o.orderStatus)
       );
 
       setExistingOrder(openOrder || null);

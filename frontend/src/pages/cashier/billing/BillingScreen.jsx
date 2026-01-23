@@ -4,6 +4,7 @@ import api from "../../../utils/axios";
 import Loader from "../../../components/Loader";
 
 const TAX_RATE = 0.05;
+const FINAL_ORDER_STATUSES = new Set(["completed", "closed"]);
 
 const BillingScreen = () => {
   const { tableId } = useParams();
@@ -20,7 +21,7 @@ const BillingScreen = () => {
       const openOrder = (res.data || []).find(
         (o) =>
           o.tableId?._id === tableId &&
-          o.orderStatus !== "completed"
+          !FINAL_ORDER_STATUSES.has(o.orderStatus)
       );
 
       setOrder(openOrder || null);
