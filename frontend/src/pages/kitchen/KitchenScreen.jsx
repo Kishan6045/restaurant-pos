@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import ProfileDropdown from "../../components/ProfileDropdown";
 import api from "../../utils/axios";
 
@@ -6,8 +6,6 @@ const KitchenScreen = () => {
   const [rows, setRows] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
-  const knownIds = useRef(new Set());
-
   // ================= FETCH & MERGE =================
   const fetchAndMerge = async () => {
     setIsRefreshing(true);
@@ -18,33 +16,44 @@ const KitchenScreen = () => {
         ? res.data
         : res.data.orders || [];
 
-      const newRows = [];
+      const incomingRows = [];
 
       orders.forEach((order) => {
         order.items?.forEach((item) => {
           if (!["pending", "preparing"].includes(item.status)) return;
 
           const key = `${order._id}_${item._id}`;
-          if (knownIds.current.has(key)) return;
 
-          knownIds.current.add(key);
-
-          newRows.push({
+          incomingRows.push({
             key,
             orderId: order._id,
             itemId: item._id,
             floor: order.tableId?.floor || "Ground",
             table: order.tableId?.tableNumber || "-",
-            name: item.product?.name || item.name,
+            name: item.productId?.name || item.product?.name || item.name,
             qty: item.quantity,
             status: item.status,
           });
         });
       });
 
-      if (newRows.length) {
-        setRows((prev) => [...newRows, ...prev]);
-      }
+      setRows((prev) => {
+        const prevByKey = new Map(prev.map((row) => [row.key, row]));
+        const merged = incomingRows.map((row) => ({
+          ...(prevByKey.get(row.key) || {}),
+          ...row,
+        }));
+        const newItems = [];
+        const existingItems = [];
+        merged.forEach((row) => {
+          if (prevByKey.has(row.key)) {
+            existingItems.push(row);
+          } else {
+            newItems.push(row);
+          }
+        });
+        return [...newItems, ...existingItems];
+      });
 
       setLastUpdated(new Date());
     } catch (err) {
