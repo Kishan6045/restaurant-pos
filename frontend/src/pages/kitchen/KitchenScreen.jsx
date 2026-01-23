@@ -1,9 +1,16 @@
-import { useEffect,useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ProfileDropdown from "../../components/ProfileDropdown";
 import api from "../../utils/axios";
 
+const ACTIVE_ORDER_STATUSES = new Set(["open", "billed"]);
+const ACTIVE_ITEM_STATUSES = new Set(["pending", "preparing"]);
+const STATUS_STYLES = {
+  pending: "bg-amber-100 text-amber-700",
+  preparing: "bg-orange-100 text-orange-700",
+};
+
 const KitchenScreen = () => {
-  const [rows, setRows] = useState([]);
+  const [menuItems, setMenuItems] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
 
@@ -17,31 +24,68 @@ const KitchenScreen = () => {
         ? res.data
         : res.data.orders || [];
 
-      const newRows = [];
+      const itemMap = new Map();
 
-      orders.forEach((order) => {
-        order.items?.forEach((item) => {
-          if (!["pending", "preparing"].includes(item.status)) return;
+      orders
+        .filter((order) => ACTIVE_ORDER_STATUSES.has(order.orderStatus))
+        .forEach((order) => {
+          const tableLabel = `T${order.tableId?.tableNumber || "-"}`;
 
-          const key = `${order._id}_${item._id}`;
+          order.items?.forEach((item) => {
+            if (!ACTIVE_ITEM_STATUSES.has(item.status)) return;
 
+            const productKey =
+              item.productId?._id || item.productId || item.name || item._id;
+            const productName =
+              item.productId?.name || item.name || "Unknown item";
 
-          newRows.push({
-            key,
-            orderId: order._id,
-            itemId: item._id,
-            floor: order.tableId?.floor || "Ground",
-            table: order.tableId?.tableNumber || "-",
-            name: item.product?.name || item.name,
-            qty: item.quantity,
-            status: item.status,
+            if (!productKey) return;
+
+            if (!itemMap.has(productKey)) {
+              itemMap.set(productKey, {
+                key: productKey,
+                name: productName,
+                totalQty: 0,
+                tables: new Map(),
+              });
+            }
+
+            const group = itemMap.get(productKey);
+            const qty = Number(item.quantity || 0);
+            group.totalQty += qty;
+
+            if (!group.tables.has(tableLabel)) {
+              group.tables.set(tableLabel, {
+                key: `${productKey}-${tableLabel}`,
+                productKey,
+                table: tableLabel,
+                qty: 0,
+                status: item.status,
+                items: [],
+              });
+            }
+
+            const tableEntry = group.tables.get(tableLabel);
+            tableEntry.qty += qty;
+            tableEntry.status = item.status;
+            tableEntry.items.push({
+              orderId: order._id,
+              itemId: item._id,
+              status: item.status,
+            });
           });
         });
-      });
 
-           setRows(newRows);
+      const groupedItems = Array.from(itemMap.values())
+        .map((group) => ({
+          ...group,
+          tableBreakdown: Array.from(group.tables.values()).sort((a, b) =>
+            a.table.localeCompare(b.table, undefined, { numeric: true })
+          ),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
 
-
+      setMenuItems(groupedItems);
       setLastUpdated(new Date());
     } catch (err) {
       console.error("Kitchen live fetch error:", err);
@@ -51,19 +95,40 @@ const KitchenScreen = () => {
   };
 
   // ================= STATUS UPDATE =================
-  const updateStatus = async (orderId, itemId, nextStatus) => {
-    setRows((prev) =>
+  const updateStatus = async (entry, nextStatus) => {
+    setMenuItems((prev) =>
       prev
-        .map((r) =>
-          r.itemId === itemId ? { ...r, status: nextStatus } : r
-        )
-        .filter((r) => r.status !== "ready")
+        .map((group) => {
+          if (group.key !== entry.productKey) return group;
+          const nextTables = group.tableBreakdown
+            .map((table) =>
+              table.key === entry.key
+                ? { ...table, status: nextStatus }
+                : table
+            )
+            .filter((table) => table.status !== "ready");
+
+          const totalQty = nextTables.reduce(
+            (sum, table) => sum + (table.qty || 0),
+            0
+          );
+
+          return {
+            ...group,
+            tableBreakdown: nextTables,
+            totalQty,
+          };
+        })
+        .filter((group) => group.tableBreakdown.length > 0)
     );
 
     try {
-      await api.patch(
-        `/api/orders/${orderId}/items/${itemId}`,
-        { status: nextStatus }
+      await Promise.all(
+        (entry.items || []).map((itemRef) =>
+          api.patch(`/api/orders/${itemRef.orderId}/items/${itemRef.itemId}`, {
+            status: nextStatus,
+          })
+        )
       );
     } catch {
       fetchAndMerge();
@@ -77,11 +142,31 @@ const KitchenScreen = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const pendingCount = rows.filter((r) => r.status === "pending").length;
-  const preparingCount = rows.filter((r) => r.status === "preparing").length;
-  const uniqueTables = new Set(
-    rows.map((r) => `${r.floor}-${r.table}`)
-  ).size;
+  const summary = useMemo(() => {
+    const tableSet = new Set();
+    let totalQty = 0;
+    let pendingQty = 0;
+    let preparingQty = 0;
+
+    menuItems.forEach((item) => {
+      totalQty += item.totalQty || 0;
+      item.tableBreakdown.forEach((table) => {
+        tableSet.add(table.table);
+        if (table.status === "pending") {
+          pendingQty += table.qty || 0;
+        } else if (table.status === "preparing") {
+          preparingQty += table.qty || 0;
+        }
+      });
+    });
+
+    return {
+      totalQty,
+      pendingQty,
+      preparingQty,
+      uniqueTables: tableSet.size,
+    };
+  }, [menuItems]);
 
   const formatTime = (value) => {
     if (!value) return "-";
@@ -102,17 +187,17 @@ const KitchenScreen = () => {
       <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
         {/* ================= STATS ================= */}
         <div className="grid grid-cols-4 gap-4">
-          <Stat label="Total Items" value={rows.length} />
-          <Stat label="Pending" value={pendingCount} color="amber" />
-          <Stat label="Preparing" value={preparingCount} color="orange" />
-          <Stat label="Active Tables" value={uniqueTables} color="emerald" />
+          <Stat label="Total Items" value={summary.totalQty} />
+          <Stat label="Pending" value={summary.pendingQty} color="amber" />
+          <Stat label="Preparing" value={summary.preparingQty} color="orange" />
+          <Stat label="Active Tables" value={summary.uniqueTables} color="emerald" />
         </div>
 
-        {/* ================= TABLE ================= */}
+        {/* ================= MENU VIEW ================= */}
         <div className="rounded-xl border bg-white overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b">
             <div>
-              <p className="text-sm font-semibold">Live Orders</p>
+              <p className="text-sm font-semibold">Live Kitchen Menu</p>
               <p className="text-xs text-slate-500">
                 Updated {formatTime(lastUpdated)}
               </p>
@@ -126,83 +211,70 @@ const KitchenScreen = () => {
             </button>
           </div>
 
-          {rows.length === 0 ? (
+          {menuItems.length === 0 ? (
             <div className="p-8 text-center text-slate-500">
               No pending or preparing items
             </div>
           ) : (
-            <div
-              className="overflow-x-auto overflow-y-auto"
-              style={{ maxHeight: "480px" }} // ≈ 8 rows
-            >
-              <table className="min-w-full text-sm">
+            <div className="p-4 space-y-3">
+              {menuItems.map((item) => (
+                <div
+                  key={item.key}
+                  className="rounded-xl border border-slate-200 bg-white p-4"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-base font-semibold text-slate-900">
+                        {item.name}
+                      </p>
+                    </div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      🔥 {item.totalQty} orders
+                    </div>
+                  </div>
 
-                <thead className="bg-slate-100 sticky top-0 z-10 text-xs uppercase text-slate-500">
-                  <tr>
-                    <th className="p-3 text-left">Floor</th>
-                    <th className="p-3 text-left">Table</th>
-                    <th className="p-3 text-left">Item</th>
-                    <th className="p-3 text-center">Qty</th>
-                    <th className="p-3 text-center">Status</th>
-                    <th className="p-3 text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r) => (
-                    <tr
-                      key={r.key}
-                      className="border-t hover:bg-slate-50"
-                    >
-                      <td className="p-3 font-medium">{r.floor}</td>
-                      <td className="p-3">T-{r.table}</td>
-                      <td className="p-3">{r.name}</td>
-                      <td className="p-3 text-center font-semibold">
-                        {r.qty}
-                      </td>
-                      <td className="p-3 text-center">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${r.status === "pending"
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-orange-100 text-orange-700"
-                            }`}
-                        >
-                          {r.status.toUpperCase()}
+                  <ul className="mt-3 space-y-2 text-sm text-slate-700">
+                    {item.tableBreakdown.map((table) => (
+                      <li
+                        key={table.key}
+                        className="flex flex-wrap items-center justify-between gap-2"
+                      >
+                        <span>
+                          - {table.table} ({table.qty})
                         </span>
-                      </td>
-                      <td className="p-3 text-center">
-                        {r.status === "pending" && (
-                          <button
-                            onClick={() =>
-                              updateStatus(
-                                r.orderId,
-                                r.itemId,
-                                "preparing"
-                              )
-                            }
-                            className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-500 text-white hover:bg-orange-600"
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                              STATUS_STYLES[table.status] ||
+                              "bg-slate-100 text-slate-600"
+                            }`}
                           >
-                            Start
-                          </button>
-                        )}
-                        {r.status === "preparing" && (
-                          <button
-                            onClick={() =>
-                              updateStatus(
-                                r.orderId,
-                                r.itemId,
-                                "ready"
-                              )
-                            }
-                            className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700"
-                          >
-                            Ready
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                            {table.status.toUpperCase()}
+                          </span>
+                          {table.status === "pending" && (
+                            <button
+                              onClick={() =>
+                                updateStatus(table, "preparing")
+                              }
+                              className="rounded-full bg-orange-500 px-3 py-1 text-xs font-semibold text-white hover:bg-orange-600"
+                            >
+                              Start
+                            </button>
+                          )}
+                          {table.status === "preparing" && (
+                            <button
+                              onClick={() => updateStatus(table, "ready")}
+                              className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                            >
+                              Ready
+                            </button>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           )}
         </div>
