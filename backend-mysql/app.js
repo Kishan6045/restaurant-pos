@@ -6,21 +6,20 @@ const app = express();
 
 /* ================== CORS (FINAL FIX) ================== */
 const allowedOrigins = [
-  "http://localhost:5173",                     // local frontend
-  "http://localhost:3000",
-  "https://restaurant-pos-beige.vercel.app"    // vercel frontend
+  "http://localhost:5173",
+  "https://restaurant-pos-beige.vercel.app"
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Postman / mobile apps ke liye
+      // allow Postman / server-to-server (no origin)
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
-        callback(null, true);
+        return callback(null, true);
       } else {
-        callback(new Error("CORS not allowed: " + origin));
+        return callback(new Error("CORS not allowed"), false);
       }
     },
     credentials: true,
@@ -28,6 +27,10 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// IMPORTANT: preflight
+app.options("*", cors());
+
 /* ====================================================== */
 
 app.use(express.json());
