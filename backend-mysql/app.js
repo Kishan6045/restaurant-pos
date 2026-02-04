@@ -5,31 +5,44 @@ const cors = require("cors");
 
 const app = express();
 
-/* ============ CORS (FIXED) ============ */
+/* ============ CORS (LOCAL + PROD WORKING) ============ */
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+  "https://restaurant-pos-beige.vercel.app"
+];
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+      // Postman / curl / server-side requests
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-//IMPORTANT: OPTIONS handler
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-  next();
-});
-/* ===================================== */
+// 🔥 VERY IMPORTANT: preflight fix
+app.options("*", cors());
+/* ==================================================== */
 
+/* ----------- PARSERS ----------- */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+/* ----------- LOGGER ----------- */
 app.use(require("./middlewares/responseLogger"));
 
-/* ============ ROUTES ============ */
+/* ----------- ROUTES ----------- */
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/cashier", require("./routes/cashierRoutes"));
@@ -42,8 +55,9 @@ app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/staff", require("./routes/staffRoutes"));
 app.use("/api/permissions", require("./routes/permissionRoutes"));
-/* ================================ */
+/* ------------------------------- */
 
+/* ----------- HEALTH CHECK ----------- */
 app.get("/", (req, res) => {
   res.json({ status: "ok", message: "Backend Running" });
 });
