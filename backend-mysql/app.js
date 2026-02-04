@@ -1,48 +1,41 @@
 require("dotenv").config();
-
 const express = require("express");
 const cors = require("cors");
 
 const app = express();
 
-/* ============ CORS (LOCAL + PROD WORKING) ============ */
+/* ================== CORS (FINAL FIX) ================== */
 const allowedOrigins = [
-  "http://localhost:5173",
+  "http://localhost:5173",                     // local frontend
   "http://localhost:3000",
-  "http://127.0.0.1:5173",
-  "https://restaurant-pos-beige.vercel.app"
+  "https://restaurant-pos-beige.vercel.app"    // vercel frontend
 ];
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Postman / curl / server-side requests
+    origin: function (origin, callback) {
+      // Postman / mobile apps ke liye
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed: " + origin));
       }
-
-      return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+/* ====================================================== */
 
-// 🔥 VERY IMPORTANT: preflight fix
-app.options("*", cors());
-/* ==================================================== */
-
-/* ----------- PARSERS ----------- */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-/* ----------- LOGGER ----------- */
 app.use(require("./middlewares/responseLogger"));
 
-/* ----------- ROUTES ----------- */
+/* ================= ROUTES ================= */
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/cashier", require("./routes/cashierRoutes"));
@@ -55,11 +48,15 @@ app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/staff", require("./routes/staffRoutes"));
 app.use("/api/permissions", require("./routes/permissionRoutes"));
-/* ------------------------------- */
+/* ========================================== */
 
-/* ----------- HEALTH CHECK ----------- */
 app.get("/", (req, res) => {
   res.json({ status: "ok", message: "Backend Running" });
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
 });
 
 module.exports = app;
