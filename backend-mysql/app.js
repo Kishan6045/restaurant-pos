@@ -1,42 +1,32 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
 const app = express();
 
-/* ================== CORS (FINAL FIX) ================== */
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://restaurant-pos-beige.vercel.app"
-];
-
+/* ================== CORS (FINAL & WORKING) ==================
+   ✔ Localhost
+   ✔ Vercel
+   ✔ Postman
+   ✔ Browser
+============================================================== */
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // allow Postman / server-to-server (no origin)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        return callback(new Error("CORS not allowed"), false);
-      }
-    },
+    origin: true,        // 🔥 jo origin request karega wahi allow
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-
-/* ====================================================== */
-
+/* ================== PARSERS ================== */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
+/* ================== LOGGER ================== */
 app.use(require("./middlewares/responseLogger"));
 
-/* ================= ROUTES ================= */
+/* ================== ROUTES ================== */
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/cashier", require("./routes/cashierRoutes"));
@@ -49,15 +39,13 @@ app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/staff", require("./routes/staffRoutes"));
 app.use("/api/permissions", require("./routes/permissionRoutes"));
-/* ========================================== */
 
+/* ================== HEALTH ================== */
 app.get("/", (req, res) => {
-  res.json({ status: "ok", message: "Backend Running" });
-});
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  res.json({
+    status: "ok",
+    message: "Backend Running (CORS OK)",
+  });
 });
 
 module.exports = app;
