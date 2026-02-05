@@ -1,32 +1,33 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const cookieParser = require("cookie-parser");
 
 const app = express();
 
-/* ================== CORS (FINAL & WORKING) ==================
-   ✔ Localhost
-   ✔ Vercel
-   ✔ Postman
-   ✔ Browser
-============================================================== */
+/* ============ CORS ============ */
 app.use(
   cors({
-    origin: true,        // 🔥 jo origin request karega wahi allow
+    origin: "http://localhost:5173",
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-/* ================== PARSERS ================== */
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+/* =============================== */
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 
-/* ================== LOGGER ================== */
 app.use(require("./middlewares/responseLogger"));
 
-/* ================== ROUTES ================== */
+/* ============ ROUTES ============ */
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/cashier", require("./routes/cashierRoutes"));
@@ -39,13 +40,10 @@ app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/staff", require("./routes/staffRoutes"));
 app.use("/api/permissions", require("./routes/permissionRoutes"));
+/* ================================ */
 
-/* ================== HEALTH ================== */
 app.get("/", (req, res) => {
-  res.json({
-    status: "ok",
-    message: "Backend Running (CORS OK)",
-  });
+  res.json({ status: "ok", message: "Backend Running" });
 });
 
 module.exports = app;
