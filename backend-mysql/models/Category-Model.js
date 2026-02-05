@@ -29,7 +29,7 @@ module.exports = (sequlize, DataTypes) => {
       indexes: [
         {
           unique: true,
-          fields: ["name", "cuisine"]  // combination of name and cuisine should be unique
+          fields: ["name", "cuisine", "isActive"]  // combination of name and cuisine should be unique
         }
       ]
     }

@@ -16,25 +16,19 @@ const createCategory = async (req, res) => {
     const trimmedName = name.trim().toLowerCase();  // extra spa removal and lowercase conversion
 
     const existingCategory = await Category.findOne({  // duplicate check
-      where: {                  // case insensitive check
-        cuisine,
-        name: Sequelize.where(
-          Sequelize.fn("LOWER", Sequelize.col("name")),  // convert column value to lowercase
-          trimmedName   // convert input to lowercase
-        )
+      where: {
+        [Op.and]: [    // multiple conditions ke liye AND operator
+          { cuisine },   // same cuisine check
+          { isActive: true },  // only active categories check
+          Sequelize.where(
+            Sequelize.fn("LOWER", Sequelize.col("name")),  // convert column value to lowercase
+            trimmedName
+          )
+        ]
       }
     });
 
-    if (existingCategory && existingCategory.isActive === false) {  //category exists but inactive → reactivate karo
-      await existingCategory.update({ isActive: true });
-
-      return res.status(200).json({
-        message: "Category re-activated successfully",
-        category: existingCategory
-      });
-    }
-
-    if (existingCategory && existingCategory.isActive === true) {  // active category already exists to error bhejo
+    if (existingCategory) {   // duplicate found
       return res.status(409).json({
         message: "Category already exists for this cuisine"
       });
@@ -70,15 +64,17 @@ const updateCategory = async (req, res) => {
       });
     }
 
-    const exists = await Category.findOne({  // duplicate check
+    const exists = await Category.findOne({
       where: {
-        id: { [Op.ne]: req.params.id },  // id ko ingore karo uske siva sare check karo
-        cuisine,
-        isActive: true,
-        name: Sequelize.where(       // case insensitive check
-          Sequelize.fn("LOWER", Sequelize.col("name")),
-          name.trim().toLowerCase()
-        )
+        [Op.and]: [    // multiple conditions ke liye AND operator
+          { id: { [Op.ne]: req.params.id } }, // current id ignore
+          { cuisine },   // same cuisine check
+          { isActive: true }, // only active categories check
+          Sequelize.where(
+            Sequelize.fn("LOWER", Sequelize.col("name")),
+            name.trim().toLowerCase() // trimmed and lowercased
+          )
+        ]
       }
     });
 
@@ -93,9 +89,6 @@ const updateCategory = async (req, res) => {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    if (!category.isActive) {   // inactive category cannot be updated
-      return res.status(400).json({ message: "Inactive category cannot be updated" });
-    }
     // SAME DATA CHECK
     if (
       category.name.toLowerCase() === name.trim().toLowerCase() &&
