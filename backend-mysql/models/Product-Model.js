@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
   const Product = sequelize.define(
-    "Product",
+    "Product",     // Model name
     {
       id: {
         type: DataTypes.INTEGER,
@@ -14,12 +14,12 @@ module.exports = (sequelize, DataTypes) => {
       },
 
       price: {
-        type: DataTypes.FLOAT,   // for money, DECIMAL(10,2) bhi use kar sakte ho
+        type: DataTypes.FLOAT,   // float 123.45 type
         allowNull: false
       },
 
       categoryId: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.INTEGER, 
         allowNull: false
       },
 
@@ -30,12 +30,12 @@ module.exports = (sequelize, DataTypes) => {
 
       isAvailable: {
         type: DataTypes.BOOLEAN,
-        defaultValue: true   // Kitchen / stock control
+        defaultValue: true   // Kitchen  stock control
       },
 
       isActive: {
         type: DataTypes.BOOLEAN,
-        defaultValue: true   // Admin control
+        defaultValue: true   //
       }
     },
     {
@@ -44,7 +44,7 @@ module.exports = (sequelize, DataTypes) => {
       indexes: [
         {
           unique: true,
-          fields: ["name", "categoryId"]  // ek category mein same name waala product nahi ho sakta
+          fields: ["name", "categoryId", "isActive"]  // composite unique  index saying active products only 
         }
       ]
     }

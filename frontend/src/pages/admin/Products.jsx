@@ -5,11 +5,13 @@ import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
 
 const Products = () => {
+  /* ================= STATE ================= */
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
 
   // ===== FILTERS =====
   const [search, setSearch] = useState("");
@@ -37,55 +39,45 @@ const Products = () => {
     cuisine: "",
     category: "",
     image: null,
-    preview: ""
+    preview: ""  // img URL for preview in edit form
   });
 
   /* ================= FETCH ================= */
-
-  const loadCategories = useCallback(async () => {
+  // load categories 
+  const loadCategories = useCallback(async () => {  // useCallback use kyki ye function baar baar na bane, dependencies change hone pr hi bane
     try {
-      console.log("Fetching categories...");
       const res = await api.get("/api/categories");
-      console.log("Categories API response:", res.data);
-      
-      // Check different possible response structures
-      let categoriesData = [];
-      
-      if (Array.isArray(res.data)) {
-        categoriesData = res.data;
-      } else if (res.data.categories && Array.isArray(res.data.categories)) {
-        categoriesData = res.data.categories;
-      } else if (res.data.data && Array.isArray(res.data.data)) {
-        categoriesData = res.data.data;
-      }
-      
-      console.log("Parsed categories:", categoriesData);
-      setCategories(categoriesData);
-      return categoriesData;
+      const data =
+        res.data.categories ||
+        res.data.data ||
+        (Array.isArray(res.data) ? res.data : []);
+
+      setCategories(data);
+      return data;
     } catch (error) {
-      console.error("Failed to load categories:", error);
-      console.error("Error details:", error.response?.data);
       toast.error("Failed to load categories");
+      setCategories([]);  // set empty array on error to avoid undefined issues
       return [];
     }
-  }, []);
+  }, []);  // one time function data load ke liye []
 
-  const loadProducts = useCallback(async () => {
+  // load products
+  const loadProducts = useCallback(async () => {   // ye function baar baar na bane, dependencies change hone pr hi bane
     try {
       console.log("Fetching products...");
       const res = await api.get("/api/products");
       console.log("Products API response:", res.data);
-      
+
       let productsData = [];
-      
-      if (Array.isArray(res.data)) {
+
+      if (Array.isArray(res.data)) {  // if response is directly an array of products
         productsData = res.data;
-      } else if (res.data.products && Array.isArray(res.data.products)) {
+      } else if (res.data.products && Array.isArray(res.data.products)) { // if response has products field which is an array
         productsData = res.data.products;
-      } else if (res.data.data && Array.isArray(res.data.data)) {
+      } else if (res.data.data && Array.isArray(res.data.data)) {  // if response has data field which is an array
         productsData = res.data.data;
       }
-      
+
       console.log("Parsed products:", productsData);
       setProducts(productsData);
       return productsData;
@@ -93,11 +85,11 @@ const Products = () => {
       console.error("Failed to load products:", error);
       console.error("Error details:", error.response?.data);
       toast.error("Failed to load products");
-      return [];
+      return []; // return empty array on error to avoid undefined issues
     }
   }, []);
 
-  useEffect(() => {
+  useEffect(() => {     // ye useEffect isliye use kyuki jab component mount ho tabhi data load ho, aur loadCategories, loadProducts ko dependencies me isliye daala kyuki ye functions useCallback se memoized hai, aur agar ye functions change hue bina dependencies ke to warning dega react
     const fetchData = async () => {
       setInitialLoading(true);
       try {
@@ -105,12 +97,12 @@ const Products = () => {
           loadCategories(),
           loadProducts()
         ]);
-        
+
         console.log("All data loaded:");
         console.log("Categories count:", categoriesData.length);
         console.log("Products count:", productsData.length);
         console.log("Sample category:", categoriesData[0]);
-        
+
         setIsDataLoaded(true);
       } catch (error) {
         console.error("Error loading data:", error);
@@ -119,29 +111,29 @@ const Products = () => {
         setInitialLoading(false);
       }
     };
-    
+
     fetchData();
   }, [loadCategories, loadProducts]);
 
-  /* ================= UTILITIES ================= */
 
+  /* ================= ACTIONS ================= */
   // Get unique cuisines from categories
   const cuisines = useMemo(() => {
     if (!categories || categories.length === 0) {
       console.log("No categories available for cuisine extraction");
       return [];
     }
-    
+
     console.log("Extracting cuisines from categories:", categories);
-    
-    const cuisineSet = new Set();
+
+    const cuisineSet = new Set(); // Set is used to store unique cuisines, automatically handles duplicates
     categories.forEach(category => {
       if (category && category.cuisine) {
         cuisineSet.add(category.cuisine.trim());
       }
     });
-    
-    const uniqueCuisines = Array.from(cuisineSet).sort();
+
+    const uniqueCuisines = Array.from(cuisineSet).sort(); // Convert set back to array and sort alphabetically
     console.log("Extracted cuisines:", uniqueCuisines);
     return uniqueCuisines;
   }, [categories]);
@@ -149,8 +141,8 @@ const Products = () => {
   // Filter categories based on selected cuisine in add form
   const filteredCategories = useMemo(() => {
     if (!form.cuisine || !categories.length) return [];
-    
-    const filtered = categories.filter(category => 
+
+    const filtered = categories.filter(category =>
       category && category.cuisine && category.cuisine.trim() === form.cuisine
     );
     console.log(`Categories for cuisine "${form.cuisine}":`, filtered);
@@ -160,8 +152,8 @@ const Products = () => {
   // Filter categories based on selected cuisine in edit form
   const editFilteredCategories = useMemo(() => {
     if (!editProduct.cuisine || !categories.length) return [];
-    
-    return categories.filter(category => 
+
+    return categories.filter(category =>
       category && category.cuisine && category.cuisine.trim() === editProduct.cuisine
     );
   }, [categories, editProduct.cuisine]);
@@ -169,15 +161,16 @@ const Products = () => {
   // Filter categories based on selected cuisine in table filter
   const filteredCategoriesForTable = useMemo(() => {
     if (!cuisineFilter || !categories.length) return categories;
-    
-    return categories.filter(category => 
+
+    return categories.filter(category =>
       category && category.cuisine && category.cuisine.trim() === cuisineFilter
     );
   }, [categories, cuisineFilter]);
 
-  /* ================= ADD ================= */
 
-  const resetForm = useCallback(() => {
+  /* ================= ADD ================= */
+  // form reset function
+  const resetForm = useCallback(() => {   // useCallback use kyuki ye function baar baar na bane, dependencies change hone pr hi bane
     setForm({ name: "", price: "", cuisine: "", category: "", image: null });
     if (fileRef.current) fileRef.current.value = "";
   }, []);
@@ -191,15 +184,16 @@ const Products = () => {
     return null;
   }, []);
 
+  // Add product function
   const addProduct = async () => {
     const validationError = validateProductForm(form);
     if (validationError) {
       return toast.error(validationError);
     }
 
-    const fd = new FormData();
+    const fd = new FormData();   // FormData is used to send multipart/form-data, which is necessary for file uploads. It allows us to append text fields and files together in one request.
     fd.append("name", form.name.trim());
-    fd.append("price", form.price);
+    fd.append("price", form.price);  // fd.append automatically converts numbers to strings, so no need to convert price to string explicitly
     fd.append("categoryId", Number(form.category));
     fd.append("image", form.image);
 
@@ -218,13 +212,14 @@ const Products = () => {
     }
   };
 
-  /* ================= EDIT ================= */
 
+  /* ================= EDIT ================= */
+  // Open edit modal and populate form with product data
   const openEdit = useCallback((product) => {
     console.log("Opening edit for product:", product);
     const cuisine = product.category?.cuisine || "";
     const categoryId = product.category?.id || "";
-    
+
     setEditProduct({
       id: product.id,
       name: product.name,
@@ -251,6 +246,7 @@ const Products = () => {
     });
   }, []);
 
+  // Update product function
   const updateProduct = async () => {
     if (!editProduct.name.trim() || !editProduct.price || Number(editProduct.price) <= 0) {
       return toast.error("Product name and valid price are required");
@@ -283,8 +279,8 @@ const Products = () => {
     }
   };
 
-  /* ================= DELETE ================= */
 
+  /* ================= DELETE ================= */
   const deleteProduct = useCallback(async (id) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
 
@@ -302,29 +298,30 @@ const Products = () => {
     }
   }, [loadProducts]);
 
-  /* ================= FILTER ================= */
 
+  // Fillter Produstcs --------------------- //
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
-      const matchesSearch = search 
+      const matchesSearch = search
         ? p.name.toLowerCase().includes(search.toLowerCase())
         : true;
-      
-      const matchesCategory = categoryFilter 
+
+      const matchesCategory = categoryFilter
         ? p.category?.id === Number(categoryFilter)
         : true;
-      
-      const matchesCuisine = cuisineFilter 
+
+      const matchesCuisine = cuisineFilter
         ? (p.category?.cuisine || "").toLowerCase() === cuisineFilter.toLowerCase()
         : true;
-      
-      const matchesPrice = priceFilter 
+
+      const matchesPrice = priceFilter
         ? String(p.price).includes(priceFilter)
         : true;
-      
+
       return matchesSearch && matchesCategory && matchesCuisine && matchesPrice;
     });
   }, [products, search, categoryFilter, cuisineFilter, priceFilter]);
+
 
   /* ================= HANDLERS ================= */
 
@@ -336,20 +333,20 @@ const Products = () => {
   const handleFileChange = useCallback((e, setter) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!validTypes.includes(file.type)) {
       toast.error("Please upload a valid image (JPEG, PNG, WebP, GIF)");
       e.target.value = "";
       return;
     }
-    
+
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image size should be less than 5MB");
       e.target.value = "";
       return;
     }
-    
+
     setter(file);
   }, []);
 
@@ -369,7 +366,7 @@ const Products = () => {
     }
   }, [editProduct, form]);
 
-  /* ================= RENDER ================= */
+  // ================= RENDER ================= // 
 
   const renderTableRows = useCallback(() => {
     if (loading && products.length === 0) {
@@ -402,8 +399,8 @@ const Products = () => {
 
     return filteredProducts.map(product => (
       <tr key={product.id} className="border-b hover:bg-gray-50/50 transition-colors duration-150">
-        <td className="py-4 px-4">
-          <div className="relative w-12 h-12">
+        <td className="py-2 px-3">
+          <div className="relative w-9 h-9 sm:w-12 sm:h-12">
             <img
               src={product.image || "/no-image.png"}
               alt={product.name}
@@ -415,27 +412,27 @@ const Products = () => {
             />
           </div>
         </td>
-        <td className="py-4 px-4">
+        <td className="py-2 px-3">
           <div>
             <p className="font-medium text-gray-800">{product.name}</p>
           </div>
         </td>
-        <td className="py-4 px-4">
+        <td className="py-2 px-3">
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
             {product.category?.name || "Uncategorized"}
           </span>
         </td>
-        <td className="py-4 px-4">
+        <td className="py-2 px-3">
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
             {product.category?.cuisine || "-"}
           </span>
         </td>
-        <td className="py-4 px-4">
+        <td className="py-2 px-3">
           <div className="flex items-center">
             <span className="font-semibold text-gray-900">₹{Number(product.price).toLocaleString()}</span>
           </div>
         </td>
-        <td className="py-4 px-4">
+        <td className="py-2 px-3">
           <div className="flex gap-2">
             <button
               onClick={() => openEdit(product)}
@@ -469,37 +466,50 @@ const Products = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+    <div className="p-2 sm:p-3 md:p-4 h-full bg-gray-100 flex flex-col overflow-auto">
       {/* HEADER */}
       <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Product Management</h1>
-        <p className="text-gray-600">Manage your menu items, prices, and categories</p>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1">Product Management</h1>
       </div>
 
       {/* ===== ADD PRODUCT CARD ===== */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 md:p-6 mb-6">
         <div className="flex items-center justify-between mb-5">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Add New Product</h2>
-            <p className="text-sm text-gray-500">Fill in the details to add a new menu item</p>
-          </div>
-          <Plus size={20} className="text-gray-400" />
+          <h2 className="text-lg font-semibold text-gray-900">Add New Product</h2>
+
+          {/* MOBILE TOGGLE */}
+          <button
+            onClick={() => setShowAddForm(v => !v)}
+            className=" md:hidden flex items-center gap-2 text-sm font-medium text-gray-700 px-3 py-1.5 rounded-lg border transition-all duration-200 hover:bg-gray-50 active:scale-95 ">
+            <ChevronDown
+              size={16}
+              className={`transition-transform duration-200 ${showAddForm ? "rotate-180" : "rotate-0"
+                }`}
+            />
+            <span>
+              {showAddForm ? "Hide Form" : "Add Product"}
+            </span>
+          </button>
+
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-          {/* Product Name */}
+
+
+        {/* Product Name */}
+        <div
+          className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 ${showAddForm ? "block" : "hidden"} md:grid`}
+        >
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1.5">Product Name</label>
             <div className="relative">
               <input
-                placeholder="e.g., Margherita Pizza"
+                placeholder="enter product name"
                 value={form.name}
                 onChange={e => setForm({ ...form, name: e.target.value })}
                 className="w-full border border-gray-300 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all bg-white text-sm"
               />
             </div>
           </div>
-          
+
           {/* Price */}
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1.5">Price (₹)</label>
@@ -510,14 +520,14 @@ const Products = () => {
                 inputMode="numeric"
                 placeholder="0.00"
                 value={form.price}
-                onChange={(e) => handlePriceChange(e.target.value, (value) => 
+                onChange={(e) => handlePriceChange(e.target.value, (value) =>
                   setForm({ ...form, price: value })
                 )}
                 className="w-full border border-gray-300 pl-8 pr-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all bg-white text-sm"
               />
             </div>
           </div>
-          
+
           {/* Cuisine */}
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1.5">Cuisine</label>
@@ -545,7 +555,7 @@ const Products = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Category */}
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1.5">Category</label>
@@ -554,16 +564,15 @@ const Products = () => {
                 value={form.category}
                 onChange={e => setForm({ ...form, category: e.target.value })}
                 disabled={!form.cuisine || filteredCategories.length === 0}
-                className={`w-full border border-gray-300 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all text-sm appearance-none pr-10 ${
-                  !form.cuisine || filteredCategories.length === 0 
-                    ? "bg-gray-50 text-gray-400 cursor-not-allowed" 
-                    : "bg-white"
-                }`}
+                className={`w-full border border-gray-300 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all text-sm appearance-none pr-10 ${!form.cuisine || filteredCategories.length === 0
+                  ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+                  : "bg-white"
+                  }`}
               >
                 <option value="">
-                  {!form.cuisine 
-                    ? "Select cuisine first" 
-                    : filteredCategories.length === 0 
+                  {!form.cuisine
+                    ? "Select cuisine first"
+                    : filteredCategories.length === 0
                       ? "No categories"
                       : "Select Category"}
                 </option>
@@ -578,7 +587,7 @@ const Products = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Image Upload */}
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1.5">Product Image</label>
@@ -587,7 +596,7 @@ const Products = () => {
                 type="file"
                 ref={fileRef}
                 accept="image/*"
-                onChange={(e) => handleFileChange(e, (file) => 
+                onChange={(e) => handleFileChange(e, (file) =>
                   setForm({ ...form, image: file })
                 )}
                 className="w-full opacity-0 absolute inset-0 cursor-pointer z-10"
@@ -599,11 +608,11 @@ const Products = () => {
                     {form.image?.name || "Choose image"}
                   </span>
                 </div>
-                <p className="text-[10px] text-gray-400 mt-1">Max 5MB • JPEG, PNG, WebP</p>
+                <p className="text-[10px] text-gray-400 mt-1">Max 5MB • JPEG, PNG</p>
               </div>
             </div>
           </div>
-          
+
           {/* Add Button */}
           <div className="flex items-end">
             <button
@@ -622,10 +631,12 @@ const Products = () => {
             </button>
           </div>
         </div>
+
       </div>
 
       {/* ===== PRODUCTS TABLE ===== */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 
+                flex flex-col flex-1 overflow-hidden">
         {/* Table Header with Filters */}
         <div className="px-5 md:px-6 py-4 border-b border-gray-200">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -635,7 +646,7 @@ const Products = () => {
                 {filteredProducts.length} of {products.length} products
               </p>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <div className="relative flex-1 md:max-w-xs">
                 <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -646,19 +657,22 @@ const Products = () => {
                   onChange={e => setSearch(e.target.value)}
                 />
               </div>
-              
-              <div className="flex items-center gap-2">
-                <Filter size={16} className="text-gray-500" />
-                <span className="text-xs font-medium text-gray-700">Filters:</span>
+
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <Filter size={14} />
+                <span>Filters</span>
               </div>
+
             </div>
           </div>
-          
+
           {/* Filter Row */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+
             <div>
               <select
-                className="w-full border border-gray-300 px-3.5 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all bg-white text-sm"
+                className="w-full border border-gray-300 px-3 py-1.5 rounded-lg text-xs sm:text-sm
+ focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all bg-white text-sm"
                 value={categoryFilter}
                 onChange={e => setCategoryFilter(e.target.value)}
               >
@@ -670,7 +684,7 @@ const Products = () => {
                 ))}
               </select>
             </div>
-            
+
             <div>
               <select
                 className="w-full border border-gray-300 px-3.5 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all bg-white text-sm"
@@ -689,7 +703,7 @@ const Products = () => {
                 ))}
               </select>
             </div>
-            
+
             <div>
               <input
                 type="text"
@@ -700,7 +714,7 @@ const Products = () => {
                 className="w-full border border-gray-300 px-3.5 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all bg-white text-sm"
               />
             </div>
-            
+
             <div>
               <button
                 onClick={() => {
@@ -718,10 +732,10 @@ const Products = () => {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto max-h-[500px]">
-          <table className="w-full">
+        <div className="flex-1 overflow-y-auto overflow-x-auto touch-pan-x">
+          <table className="w-full min-w-[700px] lg:min-w-full text-xs sm:text-sm">
             <thead className="bg-gray-50">
-              <tr className="border-b border-gray-200">
+              <tr className="bg-gray-50 sticky top-0 z-10">
                 <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Image</th>
                 <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Product</th>
                 <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Category</th>
@@ -738,7 +752,8 @@ const Products = () => {
       {/* ===== EDIT MODAL ===== */}
       {editOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl animate-in fade-in duration-200">
+          <div className=" bg-white w-full sm:w-full max-w-md max-h-[90vh]  overflow-y-auto  rounded-2xl shadow-xl animate-in fade-in duration-200">
+
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <div>
@@ -747,7 +762,7 @@ const Products = () => {
               </div>
               <button
                 onClick={closeEdit}
-                className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                className="p-1.5 sm:p-2 rounded-xl hover:bg-gray-100 transition-colors"
               >
                 <X size={18} />
               </button>
@@ -764,7 +779,7 @@ const Products = () => {
                   className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all text-sm"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1.5">Price (₹)</label>
                 <div className="relative">
@@ -774,14 +789,14 @@ const Products = () => {
                     inputMode="numeric"
                     placeholder="Enter price"
                     value={editProduct.price}
-                    onChange={(e) => handlePriceChange(e.target.value, (value) => 
+                    onChange={(e) => handlePriceChange(e.target.value, (value) =>
                       setEditProduct({ ...editProduct, price: value })
                     )}
                     className="w-full border border-gray-300 pl-8 pr-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all text-sm"
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1.5">Cuisine</label>
                 <div className="relative">
@@ -802,7 +817,7 @@ const Products = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1.5">Category</label>
                 <div className="relative">
@@ -810,16 +825,15 @@ const Products = () => {
                     value={editProduct.category}
                     onChange={e => setEditProduct({ ...editProduct, category: Number(e.target.value) })}
                     disabled={!editProduct.cuisine || editFilteredCategories.length === 0}
-                    className={`w-full border border-gray-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all text-sm appearance-none pr-10 ${
-                      !editProduct.cuisine || editFilteredCategories.length === 0 
-                        ? "bg-gray-50 text-gray-400 cursor-not-allowed" 
-                        : "bg-white"
-                    }`}
+                    className={`w-full border border-gray-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all text-sm appearance-none pr-10 ${!editProduct.cuisine || editFilteredCategories.length === 0
+                      ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+                      : "bg-white"
+                      }`}
                   >
                     <option value="">
-                      {!editProduct.cuisine 
-                        ? "Select cuisine first" 
-                        : editFilteredCategories.length === 0 
+                      {!editProduct.cuisine
+                        ? "Select cuisine first"
+                        : editFilteredCategories.length === 0
                           ? "No categories"
                           : "Select Category"}
                     </option>
@@ -834,7 +848,7 @@ const Products = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1.5">Product Image</label>
                 <div className="flex items-start gap-4">
