@@ -6,7 +6,8 @@ const auth = require("../middlewares/authMiddleware");
 const permit = require("../middlewares/permissionMiddleware");   //const role = require("../middlewares/roleMiddleware");
 
 //IMPORT CONTROLLER
-const { createTable,
+const { 
+    createTable,
     updateTableStatus,
     getTables,
     deleteTable,

@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
 import api from "../../utils/axios";
-import { Plus, Pencil, Trash2,  X } from "lucide-react";
+import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
-
 
 const FLOORS = ["Ground", "First", "Second"];
 
 const Tables = () => {
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [floorFilter, setFloorFilter] = useState("All");
 
   const [openModal, setOpenModal] = useState(false);
@@ -19,13 +17,13 @@ const Tables = () => {
   const [tableNumber, setTableNumber] = useState("");
   const [floor, setFloor] = useState("Ground");
 
-  // ================= FETCH TABLES =================
+  // ================= FETCH =================
   const fetchTables = async () => {
     try {
       setLoading(true);
       const res = await api.get("/api/tables");
       setTables(res.data.tables || []);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load tables");
     } finally {
       setLoading(false);
@@ -44,20 +42,22 @@ const Tables = () => {
       toast.error("Table number required");
       return;
     }
+
     try {
       setLoading(true);
-         if (editingTable) {
-        await api.put(`/api/tables/${editingTable._id}`, {
+
+      if (editingTable) {
+        await api.put(`/api/tables/${editingTable.id}`, {
           tableNumber,
-          floor
+          floor,
         });
         toast.success("Table updated");
       } else {
         await api.post("/api/tables", {
           tableNumber,
-          floor
+          floor,
         });
-        toast.success("Table created");     
+        toast.success("Table created");
       }
 
       setOpenModal(false);
@@ -72,25 +72,9 @@ const Tables = () => {
     }
   };
 
-  // ================= STATUS UPDATE =================
-  const toggleStatus = async (table) => {
-    try {
-      const newStatus =
-        table.status === "available" ? "occupied" : "available";
-
-      await api.patch(`/api/tables/${table._id}/status`, {
-        status: newStatus
-      });
-
-      fetchTables();
-    } catch {
-      toast.error("Status update failed");
-    }
-  };
-
   // ================= DELETE =================
   const deleteTable = async (id) => {
-    if (!confirm("Delete table?")) return;
+    if (!window.confirm("Delete table?")) return;
 
     try {
       await api.delete(`/api/tables/${id}`);
@@ -101,7 +85,6 @@ const Tables = () => {
     }
   };
 
-  // ================= FILTER =================
   const filteredTables =
     floorFilter === "All"
       ? tables
@@ -109,134 +92,117 @@ const Tables = () => {
 
   // ================= UI =================
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* HEADER */}
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Restaurant Tables</h2>
 
         <button
-          onClick={() => setOpenModal(true)}
-          className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded"
+          onClick={() => {
+            setEditingTable(null);
+            setTableNumber("");
+            setFloor("Ground");
+            setOpenModal(true);
+          }}
+          className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm hover:bg-gray-800 transition"
         >
-          <Plus size={16} />
+          <Plus size={14} />
           Add Table
-        </button>
+        </button> 
       </div>
 
       {/* FILTER */}
-      <div className="flex gap-3">
-        <select
-          value={floorFilter}
-          onChange={(e) => setFloorFilter(e.target.value)}
-          className="border rounded px-3 py-2"
-        >
-          <option value="All">All Floors</option>
-          {FLOORS.map((f) => (
-            <option key={f}>{f}</option>
-          ))}
-        </select>
-      </div>
+      <select
+        value={floorFilter}
+        onChange={(e) => setFloorFilter(e.target.value)}
+        className="border rounded-md px-3 py-2 text-sm"
+      >
+        <option value="All">All Floors</option>
+        {FLOORS.map((f) => (
+          <option key={f}>{f}</option>
+        ))}
+      </select>
 
       {/* TABLE GRID */}
       {loading ? (
         <Loader label="Loading tables..." containerClassName="py-10" />
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {filteredTables.map((table) => (
             <div
-              key={table._id}
-              className={`rounded-lg p-4 border shadow-sm relative ${
-                table.status === "available"
-                  ? "bg-green-50 border-green-400"
-                  : "bg-red-50 border-red-400"
-              }`}
+              key={table.id}
+              className="rounded-xl p-4 bg-gradient-to-br from-gray-50 to-white border border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-1 transition duration-200"
             >
-              <div className="text-lg font-bold">
+              <div className="font-semibold text-base text-gray-800">
                 Table {table.tableNumber}
               </div>
 
-              <div className="text-sm text-gray-600">{table.floor} Floor</div>
 
-              <div
-                className={`mt-2 text-xs font-semibold ${
-                  table.status === "available"
-                    ? "text-green-700"
-                    : "text-red-700"
-                }`}
-              >
-                {table.status.toUpperCase()}
+              <div className="text-xs text-gray-500">
+                {table.floor} Floor
               </div>
 
               {/* ACTIONS */}
-              <div className="flex justify-between mt-3">
+              <div className="flex justify-end gap-2 mt-3">
                 <button
-                  onClick={() => toggleStatus(table)}
-                  className="text-xs underline"
+                  onClick={() => {
+                    setEditingTable(table);
+                    setTableNumber(table.tableNumber);
+                    setFloor(table.floor);
+                    setOpenModal(true);
+                  }}
+                  className="p-1 text-gray-600 hover:text-black"
                 >
-                  Toggle
+                  <Pencil size={14} />
                 </button>
 
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setEditingTable(table);
-                      setTableNumber(table.tableNumber);
-                      setFloor(table.floor);
-                      setOpenModal(true);
-                    }}
-                  >
-                    <Pencil size={16} />
-                  </button>
-
-                  <button
-                    onClick={() => deleteTable(table._id)}
-                    disabled={table.status === "occupied"}
-                    className={`${
-                      table.status === "occupied"
-                        ? "opacity-40 cursor-not-allowed"
-                        : ""
-                    }`}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
+                <button
+                  onClick={() => deleteTable(table.id)}
+                  className="p-1 text-red-600 hover:text-red-800"
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* MODAL */}
+      {/* ================= MODAL ================= */}
       {openModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg w-full max-w-sm p-5">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="font-semibold">
+        <div className="fixed inset-0  flex items-center justify-center z-50">
+          <div className="bg-white w-full max-w-xs rounded-xl p-6 shadow-lg border border-gray-200">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-sm font-semibold">
                 {editingTable ? "Edit Table" : "Add Table"}
               </h3>
               <button
                 onClick={() => {
                   setOpenModal(false);
                   setEditingTable(null);
+                  setTableNumber("");
+                  setFloor("Ground");
                 }}
               >
-                <X />
+                <X size={16} />
               </button>
-            </div>
+            </div>    
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <input
                 type="number"
+                min="1"
                 placeholder="Table Number"
                 value={tableNumber}
                 onChange={(e) => setTableNumber(e.target.value)}
-                className="w-full border px-3 py-2 rounded"
+                className="w-full border rounded-md px-3 py-2 text-sm"
+                required
               />
 
               <select
                 value={floor}
                 onChange={(e) => setFloor(e.target.value)}
-                className="w-full border px-3 py-2 rounded"
+                className="w-full border rounded-md px-3 py-2 text-sm"
               >
                 {FLOORS.map((f) => (
                   <option key={f}>{f}</option>
@@ -245,9 +211,9 @@ const Tables = () => {
 
               <button
                 type="submit"
-                className="w-full bg-black text-white py-2 rounded"
+                className="w-full bg-black text-white py-2 rounded-md text-sm hover:bg-gray-800 transition"
               >
-                {editingTable ? "Update Table" : "Create Table"}
+                {editingTable ? "Update" : "Create"}
               </button>
             </form>
           </div>
@@ -258,4 +224,3 @@ const Tables = () => {
 };
 
 export default Tables;
-  

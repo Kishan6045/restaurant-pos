@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
   const Table = sequelize.define(
-    "Table",
+    "Table",      // Model name 
     {
       id: {
         type: DataTypes.INTEGER,
@@ -14,7 +14,8 @@ module.exports = (sequelize, DataTypes) => {
       },
 
       floor: {
-        type: DataTypes.STRING,
+        type: DataTypes.ENUM("Ground", "First", "Second"),
+        allowNull: false,
         defaultValue: "Ground"
       },
 
@@ -24,12 +25,12 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     {
-      tableName: "tables",
+      tableName: "tables",  // Table name in DB
       timestamps: true,
       indexes: [
         {
           unique: true,
-          fields: ["tableNumber", "floor"] // 👈 same as Mongo compound index
+          fields: ["tableNumber", "floor"]  // Unique constraint to prevent duplicate table numbers on the same floor
         }
       ]
     }
