@@ -2,7 +2,7 @@ const { User } = require("../models");
 const bcrypt = require("bcryptjs");
 const { Op } = require("sequelize");
 
-/* ================= CREATE STAFF ================= */
+// ================= CREATE STAFF(controller) ================= //
 exports.createStaff = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -45,7 +45,8 @@ exports.createStaff = async (req, res) => {
   }
 };
 
-/* ================= UPDATE STAFF ================= */
+
+// ================= UPDATE STAFF(controller)================= //
 exports.updateStaff = async (req, res) => {
   try {
     const { id } = req.params;
@@ -80,7 +81,8 @@ exports.updateStaff = async (req, res) => {
   }
 };
 
-/* ================= DELETE STAFF (SOFT) ================= */
+
+// ================= DELETE STAFF (SOFT) ================= //
 exports.deleteStaff = async (req, res) => {
   try {
     const { id } = req.params;
@@ -104,7 +106,8 @@ exports.deleteStaff = async (req, res) => {
   }
 };
 
-/* ================= GET ALL STAFF ================= */
+
+// ================= GET ALL STAFF (controller) ================= //
 exports.getAllStaff = async (req, res) => {
   try {
     const staff = await User.findAll({
