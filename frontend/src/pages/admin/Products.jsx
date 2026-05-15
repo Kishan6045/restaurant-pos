@@ -3,6 +3,10 @@ import api from "../../utils/axios";
 import { Trash2, Pencil, X, Upload, ChevronDown, Search, Filter, Plus, Image as ImageIcon } from "lucide-react";
 import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
+import PaginationBar from "../../components/PaginationBar";
+import AdminPageShell from "../../components/admin/AdminPageShell";
+import { docId } from "../../helpers/docId";
+import Select from "../../components/ui/Select";
 
 const Products = () => {
   /* ================= STATE ================= */
@@ -12,6 +16,9 @@ const Products = () => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1, limit: 10 });
+  const PRODUCTS_LIMIT = 10;
 
   // ===== FILTERS =====
   const [search, setSearch] = useState("");
@@ -46,12 +53,8 @@ const Products = () => {
   // load categories 
   const loadCategories = useCallback(async () => {  // useCallback use kyki ye function baar baar na bane, dependencies change hone pr hi bane
     try {
-      const res = await api.get("/api/categories");
-      const data =
-        res.data.categories ||
-        res.data.data ||
-        (Array.isArray(res.data) ? res.data : []);
-
+      const res = await api.get("/api/categories", { params: { limit: 200 } });
+      const data = res.data.categories || res.data.data || (Array.isArray(res.data) ? res.data : []);
       setCategories(data);
       return data;
     } catch (error) {
@@ -62,58 +65,35 @@ const Products = () => {
   }, []);  // one time function data load ke liye []
 
   // load products
-  const loadProducts = useCallback(async () => {   // ye function baar baar na bane, dependencies change hone pr hi bane
+  const loadProducts = useCallback(async (pageNum = 1) => {   // ye function baar baar na bane, dependencies change hone pr hi bane
     try {
       console.log("Fetching products...");
-      const res = await api.get("/api/products");
-      console.log("Products API response:", res.data);
-
-      let productsData = [];
-
-      if (Array.isArray(res.data)) {  // if response is directly an array of products
-        productsData = res.data;
-      } else if (res.data.products && Array.isArray(res.data.products)) { // if response has products field which is an array
-        productsData = res.data.products;
-      } else if (res.data.data && Array.isArray(res.data.data)) {  // if response has data field which is an array
-        productsData = res.data.data;
-      }
-
-      console.log("Parsed products:", productsData);
+      const res = await api.get("/api/products", { params: { page: pageNum || 1, limit: PRODUCTS_LIMIT } });
+      const productsData = res.data.products || res.data.data || [];
       setProducts(productsData);
+      setPagination(res.data.pagination || { total: 0, totalPages: 1, limit: PRODUCTS_LIMIT });
       return productsData;
     } catch (error) {
-      console.error("Failed to load products:", error);
-      console.error("Error details:", error.response?.data);
       toast.error("Failed to load products");
-      return []; // return empty array on error to avoid undefined issues
+      return [];
     }
   }, []);
 
-  useEffect(() => {     // ye useEffect isliye use kyuki jab component mount ho tabhi data load ho, aur loadCategories, loadProducts ko dependencies me isliye daala kyuki ye functions useCallback se memoized hai, aur agar ye functions change hue bina dependencies ke to warning dega react
+  useEffect(() => {
     const fetchData = async () => {
       setInitialLoading(true);
       try {
-        const [categoriesData, productsData] = await Promise.all([
-          loadCategories(),
-          loadProducts()
-        ]);
-
-        console.log("All data loaded:");
-        console.log("Categories count:", categoriesData.length);
-        console.log("Products count:", productsData.length);
-        console.log("Sample category:", categoriesData[0]);
-
+        await loadCategories();
+        await loadProducts(page);
         setIsDataLoaded(true);
       } catch (error) {
-        console.error("Error loading data:", error);
         toast.error("Error loading data");
       } finally {
         setInitialLoading(false);
       }
     };
-
     fetchData();
-  }, [loadCategories, loadProducts]);
+  }, [page]);
 
 
   /* ================= ACTIONS ================= */
@@ -194,14 +174,14 @@ const Products = () => {
     const fd = new FormData();   // FormData is used to send multipart/form-data, which is necessary for file uploads. It allows us to append text fields and files together in one request.
     fd.append("name", form.name.trim());
     fd.append("price", form.price);  // fd.append automatically converts numbers to strings, so no need to convert price to string explicitly
-    fd.append("categoryId", Number(form.category));
+    fd.append("categoryId", String(form.category));
     fd.append("image", form.image);
 
     try {
       setLoading(true);
       await api.post("/api/products", fd);
       toast.success("Product added successfully");
-      await loadProducts();
+      await loadProducts(page);
       resetForm();
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Failed to add product";
@@ -218,10 +198,10 @@ const Products = () => {
   const openEdit = useCallback((product) => {
     console.log("Opening edit for product:", product);
     const cuisine = product.category?.cuisine || "";
-    const categoryId = product.category?.id || "";
+    const categoryId = docId(product.category) || "";
 
     setEditProduct({
-      id: product.id,
+      id: docId(product),
       name: product.name,
       price: product.price,
       cuisine: cuisine,
@@ -261,15 +241,15 @@ const Products = () => {
     const fd = new FormData();
     fd.append("name", editProduct.name.trim());
     fd.append("price", editProduct.price);
-    fd.append("categoryId", Number(editProduct.category));
+    fd.append("categoryId", String(editProduct.category));
     if (editProduct.image) fd.append("image", editProduct.image);
 
     try {
       setLoading(true);
-      await api.put(`/api/products/${editProduct.id}`, fd);
+      await api.put(`/api/products/${docId(editProduct)}`, fd);
       toast.success("Product updated successfully");
       closeEdit();
-      await loadProducts();
+      await loadProducts(page);
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Update failed";
       console.error("Update product error:", err);
@@ -288,7 +268,7 @@ const Products = () => {
       setLoading(true);
       await api.delete(`/api/products/${id}`);
       toast.success("Product deleted successfully");
-      await loadProducts();
+      await loadProducts(page);
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Delete failed";
       console.error("Delete product error:", err);
@@ -307,7 +287,7 @@ const Products = () => {
         : true;
 
       const matchesCategory = categoryFilter
-        ? p.category?.id === Number(categoryFilter)
+        ? String(docId(p.category)) === String(categoryFilter)
         : true;
 
       const matchesCuisine = cuisineFilter
@@ -352,19 +332,19 @@ const Products = () => {
 
   const handleCuisineChange = useCallback((cuisine, isEdit = false) => {
     if (isEdit) {
-      setEditProduct({
-        ...editProduct,
-        cuisine: cuisine,
-        category: "" // Reset category when cuisine changes
-      });
+      setEditProduct((prev) => ({
+        ...prev,
+        cuisine,
+        category: "",
+      }));
     } else {
-      setForm({
-        ...form,
-        cuisine: cuisine,
-        category: "" // Reset category when cuisine changes
-      });
+      setForm((prev) => ({
+        ...prev,
+        cuisine,
+        category: "",
+      }));
     }
-  }, [editProduct, form]);
+  }, []);
 
   // ================= RENDER ================= // 
 
@@ -398,7 +378,7 @@ const Products = () => {
     }
 
     return filteredProducts.map(product => (
-      <tr key={product.id} className="border-b hover:bg-gray-50/50 transition-colors duration-150">
+      <tr key={docId(product)} className="border-b hover:bg-gray-50/50 transition-colors duration-150">
         <td className="py-2 px-3">
           <div className="relative w-9 h-9 sm:w-12 sm:h-12">
             <img
@@ -442,7 +422,7 @@ const Products = () => {
               <Pencil size={14} />
             </button>
             <button
-              onClick={() => deleteProduct(product.id)}
+              onClick={() => deleteProduct(docId(product))}
               className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all duration-200 hover:scale-105 active:scale-95"
               title="Delete"
             >
@@ -466,14 +446,11 @@ const Products = () => {
   }
 
   return (
-    <div className="p-2 sm:p-3 md:p-4 h-full bg-gray-100 flex flex-col overflow-auto">
-      {/* HEADER */}
-      <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1">Product Management</h1>
-      </div>
-
+    <>
+    <AdminPageShell title="Products">
+      <div className="flex flex-col gap-6 overflow-hidden p-4 sm:p-6">
       {/* ===== ADD PRODUCT CARD ===== */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 md:p-6 mb-6">
+      <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-5 shadow-sm md:p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold text-gray-900">Add New Product</h2>
 
@@ -531,61 +508,38 @@ const Products = () => {
           {/* Cuisine */}
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1.5">Cuisine</label>
-            <div className="relative">
-              <select
-                value={form.cuisine}
-                onChange={e => handleCuisineChange(e.target.value, false)}
-                className="w-full border border-gray-300 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all bg-white text-sm appearance-none pr-10"
-              >
-                <option value="">Select Cuisine</option>
-                {cuisines.length > 0 ? (
-                  cuisines.map(cuisine => (
-                    <option key={cuisine} value={cuisine}>
-                      {cuisine}
-                    </option>
-                  ))
-                ) : (
-                  <option value="" disabled>
-                    {isDataLoaded ? "No cuisines found" : "Loading..."}
-                  </option>
-                )}
-              </select>
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <ChevronDown size={16} className="text-gray-400" />
-              </div>
-            </div>
+            <Select
+              aria-label="Product cuisine"
+              value={form.cuisine}
+              onChange={(v) => handleCuisineChange(v, false)}
+              options={cuisines.map((c) => ({ value: c, label: c }))}
+              placeholder={!isDataLoaded ? "Loading..." : cuisines.length === 0 ? "No cuisines found" : "Select Cuisine"}
+              disabled={!isDataLoaded || cuisines.length === 0}
+              className="w-full"
+            />
           </div>
 
           {/* Category */}
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1.5">Category</label>
-            <div className="relative">
-              <select
-                value={form.category}
-                onChange={e => setForm({ ...form, category: e.target.value })}
-                disabled={!form.cuisine || filteredCategories.length === 0}
-                className={`w-full border border-gray-300 px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all text-sm appearance-none pr-10 ${!form.cuisine || filteredCategories.length === 0
-                  ? "bg-gray-50 text-gray-400 cursor-not-allowed"
-                  : "bg-white"
-                  }`}
-              >
-                <option value="">
-                  {!form.cuisine
-                    ? "Select cuisine first"
-                    : filteredCategories.length === 0
-                      ? "No categories"
-                      : "Select Category"}
-                </option>
-                {filteredCategories.map(category => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <ChevronDown size={16} className="text-gray-400" />
-              </div>
-            </div>
+            <Select
+              aria-label="Product category"
+              value={form.category}
+              onChange={(v) => setForm((prev) => ({ ...prev, category: String(v) }))}
+              disabled={!form.cuisine || filteredCategories.length === 0}
+              placeholder={
+                !form.cuisine
+                  ? "Select cuisine first"
+                  : filteredCategories.length === 0
+                    ? "No categories"
+                    : "Select Category"
+              }
+              options={filteredCategories.map((category) => ({
+                value: docId(category),
+                label: category.name,
+              }))}
+              className="w-full"
+            />
           </div>
 
           {/* Image Upload */}
@@ -635,15 +589,14 @@ const Products = () => {
       </div>
 
       {/* ===== PRODUCTS TABLE ===== */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 
-                flex flex-col flex-1 overflow-hidden">
+      <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         {/* Table Header with Filters */}
         <div className="px-5 md:px-6 py-4 border-b border-gray-200">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h2 className="text-lg font-semibold text-gray-900">All Products</h2>
               <p className="text-sm text-gray-500">
-                {filteredProducts.length} of {products.length} products
+                {filteredProducts.length} of {pagination.total} products
               </p>
             </div>
 
@@ -670,38 +623,39 @@ const Products = () => {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
 
             <div>
-              <select
-                className="w-full border border-gray-300 px-3 py-1.5 rounded-lg text-xs sm:text-sm
- focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all bg-white text-sm"
+              <Select
+                aria-label="Filter by category"
+                variant="compact"
                 value={categoryFilter}
-                onChange={e => setCategoryFilter(e.target.value)}
-              >
-                <option value="">All Categories</option>
-                {filteredCategoriesForTable.map(category => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
+                onChange={setCategoryFilter}
+                options={[
+                  { value: "", label: "All Categories" },
+                  ...filteredCategoriesForTable.map((category) => ({
+                    value: docId(category),
+                    label: category.name,
+                  })),
+                ]}
+                placeholder="All Categories"
+                className="w-full"
+              />
             </div>
 
             <div>
-              <select
-                className="w-full border border-gray-300 px-3.5 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all bg-white text-sm"
+              <Select
+                aria-label="Filter by cuisine"
+                variant="compact"
                 value={cuisineFilter}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setCuisineFilter(value);
+                onChange={(v) => {
+                  setCuisineFilter(v);
                   setCategoryFilter("");
                 }}
-              >
-                <option value="">All Cuisines</option>
-                {cuisines.map(cuisine => (
-                  <option key={cuisine} value={cuisine}>
-                    {cuisine}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: "", label: "All Cuisines" },
+                  ...cuisines.map((cuisine) => ({ value: cuisine, label: cuisine })),
+                ]}
+                placeholder="All Cuisines"
+                className="w-full"
+              />
             </div>
 
             <div>
@@ -747,7 +701,17 @@ const Products = () => {
             <tbody>{renderTableRows()}</tbody>
           </table>
         </div>
+        <PaginationBar
+          page={page}
+          totalPages={pagination.totalPages}
+          total={pagination.total}
+          limit={pagination.limit}
+          onPageChange={setPage}
+          loading={initialLoading}
+        />
       </div>
+      </div>
+    </AdminPageShell>
 
       {/* ===== EDIT MODAL ===== */}
       {editOpen && (
@@ -799,54 +763,36 @@ const Products = () => {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1.5">Cuisine</label>
-                <div className="relative">
-                  <select
-                    value={editProduct.cuisine}
-                    onChange={e => handleCuisineChange(e.target.value, true)}
-                    className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all text-sm appearance-none pr-10"
-                  >
-                    <option value="">Select Cuisine</option>
-                    {cuisines.map(cuisine => (
-                      <option key={cuisine} value={cuisine}>
-                        {cuisine}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <ChevronDown size={16} className="text-gray-400" />
-                  </div>
-                </div>
+                <Select
+                  aria-label="Edit product cuisine"
+                  value={editProduct.cuisine}
+                  onChange={(v) => handleCuisineChange(v, true)}
+                  options={cuisines.map((c) => ({ value: c, label: c }))}
+                  placeholder="Select Cuisine"
+                  className="w-full"
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1.5">Category</label>
-                <div className="relative">
-                  <select
-                    value={editProduct.category}
-                    onChange={e => setEditProduct({ ...editProduct, category: Number(e.target.value) })}
-                    disabled={!editProduct.cuisine || editFilteredCategories.length === 0}
-                    className={`w-full border border-gray-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all text-sm appearance-none pr-10 ${!editProduct.cuisine || editFilteredCategories.length === 0
-                      ? "bg-gray-50 text-gray-400 cursor-not-allowed"
-                      : "bg-white"
-                      }`}
-                  >
-                    <option value="">
-                      {!editProduct.cuisine
-                        ? "Select cuisine first"
-                        : editFilteredCategories.length === 0
-                          ? "No categories"
-                          : "Select Category"}
-                    </option>
-                    {editFilteredCategories.map(category => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <ChevronDown size={16} className="text-gray-400" />
-                  </div>
-                </div>
+                <Select
+                  aria-label="Edit product category"
+                  value={editProduct.category}
+                  onChange={(v) => setEditProduct((prev) => ({ ...prev, category: String(v) }))}
+                  disabled={!editProduct.cuisine || editFilteredCategories.length === 0}
+                  placeholder={
+                    !editProduct.cuisine
+                      ? "Select cuisine first"
+                      : editFilteredCategories.length === 0
+                        ? "No categories"
+                        : "Select Category"
+                  }
+                  options={editFilteredCategories.map((category) => ({
+                    value: docId(category),
+                    label: category.name,
+                  }))}
+                  className="w-full"
+                />
               </div>
 
               <div>
@@ -922,7 +868,7 @@ const Products = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

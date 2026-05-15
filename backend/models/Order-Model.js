@@ -7,6 +7,18 @@ const orderSchema = new mongoose.Schema({
         required: true
     },
 
+    /** UTC date key `YYYY-MM-DD` — matches OrderCounter._id for that day’s sequence */
+    businessDay: {
+        type: String,
+        trim: true,
+    },
+
+    /** Human kitchen / ticket number for this day, e.g. `#104` (unique per `businessDay`) */
+    displayOrderNumber: {
+        type: Number,
+        min: 1,
+    },
+
     items: [
         {
             productId: {

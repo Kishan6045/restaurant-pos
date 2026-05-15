@@ -1,99 +1,100 @@
-import { ChevronLeft, ShoppingBag, Clock } from "lucide-react";
- 
-// OrderHeader component
+import { ChevronLeft, ChefHat } from "lucide-react";
+import { orderTicketLabel } from "../../../helpers/ordersResponse";
+
 const OrderHeader = ({
-  tableId,        // Current table ID
-  existingOrder,  // Existing open order (if any)
-  cartItemCount,  // Total items in cart
-  onBack,         // Back button handler
-  onBilling,      // Billing button handler
-  onOpenCart,     // Open mobile cart drawer
-  children,       // Search & category section
+  tableMeta = {},
+  existingOrder,
+  kitchenReady = false,
+  kitchenStats = { total: 0, done: 0, pending: 0 },
+  cartItemCount,
+  onBack,
+  onBilling,
+  onSendToKitchen,
+  sending,
+  children,
   billingDisabled = false,
 }) => {
+  const canSendToKitchen = cartItemCount > 0 && !sending;
+  const label =
+    tableMeta.tableNumber != null
+      ? `T-${tableMeta.tableNumber}`
+      : "Table";
+  const floor = tableMeta.floor ? String(tableMeta.floor) : null;
+
   return (
-    // Sticky header at top
-    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white">
-      {/* Container */}
-      <div className="mx-auto w-full max-w-7xl px-4 py-3">
- 
-        {/* Top row */}
-        <div className="flex items-center justify-between gap-3">
- 
-          {/* Left side: Back button + Table info */}
-          <div className="flex items-center gap-3">
- 
-            {/* Back to tables button */}
+    <header className="sticky top-0 z-20 shrink-0 bg-transparent px-2 pb-1.5 pt-2 sm:px-3 sm:pb-2 sm:pt-2.5 md:px-4 md:pb-2 md:pt-3">
+      <div className="w-full rounded-2xl border border-indigo-100/85 bg-gradient-to-br from-white via-white to-indigo-50/40 shadow-[0_8px_32px_rgba(67,56,202,0.09)] ring-1 ring-indigo-950/[0.05] backdrop-blur-md sm:rounded-3xl">
+        <div className="space-y-2 px-2.5 py-2.5 sm:space-y-2.5 sm:px-3 sm:py-3 md:px-4 md:py-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-2.5">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:gap-2.5">
             <button
-              onClick={onBack} // Navigate back to tables
-              className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900"
+              type="button"
+              onClick={onBack}
+              className="inline-flex h-9 shrink-0 items-center gap-0.5 rounded-full border border-indigo-100/90 bg-white px-3 text-[11px] font-semibold text-slate-800 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50/50 hover:shadow md:h-10 md:px-4 md:text-xs"
+              aria-label="Back to tables"
             >
-              {/* Left arrow icon */}
-              <ChevronLeft className="h-4 w-4" />
- 
-              {/* Hide text on small screens */}
-              <span className="hidden sm:inline">Tables</span>
+              <ChevronLeft className="h-4 w-4 md:h-4 md:w-4" />
+              <span className="hidden sm:inline pr-0.5">Back</span>
             </button>
- 
-            {/* Table label and number */}
-            <div>
-              <p className="text-[10px] uppercase tracking-wide text-slate-400">
-                Table
-              </p>
-              <h1 className="text-lg font-semibold text-slate-900">
-                Table {tableId}
-              </h1>
+            <div className="min-w-0 max-w-[min(100%,14rem)] rounded-2xl border border-indigo-100/80 bg-indigo-50/40 px-3 py-1.5 shadow-sm sm:max-w-[16rem] md:px-3.5 md:py-2">
+              <span className="block text-[9px] font-semibold uppercase tracking-wide text-indigo-600/90 md:text-[10px]">{label}</span>
+              <span className="block truncate text-xs font-semibold leading-tight text-slate-900 md:text-sm">{floor || "—"}</span>
             </div>
-          </div>
- 
-          {/* Right side: Order status, Billing, Cart */}
-          <div className="flex items-center gap-2">
- 
-            {/* Show active order badge only if order exists (desktop only) */}
-            {existingOrder && (
-              <div className="hidden md:flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
-                <Clock className="h-4 w-4" />
-                Active order
+            {existingOrder ? (
+              <div className="shrink-0 rounded-2xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50 to-white px-3 py-1.5 shadow-sm ring-1 ring-indigo-900/[0.06] md:px-3.5 md:py-2">
+                <span className="block text-[8px] font-semibold uppercase tracking-wide text-indigo-700">Order</span>
+                <span className="block text-center text-sm font-black tabular-nums leading-none text-indigo-950 md:text-base">
+                  {orderTicketLabel(existingOrder)}
+                </span>
               </div>
+            ) : null}
+          </div>
+
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            {existingOrder && kitchenStats.total > 0 && (
+              <span
+                className={`inline-flex h-9 items-center rounded-full border px-3 text-[10px] font-semibold shadow-sm md:h-10 md:px-3.5 md:text-[11px] ${
+                  kitchenReady ? "border-emerald-200/90 bg-emerald-50 text-emerald-800" : "border-sky-200/90 bg-sky-50 text-sky-900"
+                }`}
+              >
+                <span className="inline-flex items-center gap-1">
+                  <ChefHat className="h-3.5 w-3.5 shrink-0 md:h-4 md:w-4" />
+                  {kitchenReady ? "Ready" : `${kitchenStats.done}/${kitchenStats.total}`}
+                </span>
+              </span>
             )}
- 
-            {/* Billing button (desktop only) */}
             <button
-              onClick={onBilling} // Go to billing page
-              disabled={billingDisabled}
-              className={`hidden md:inline-flex items-center rounded-md px-3 py-1.5 text-xs font-semibold ${
-                billingDisabled
-                  ? "cursor-not-allowed bg-slate-200 text-slate-500"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
+              type="button"
+              onClick={onSendToKitchen}
+              disabled={!canSendToKitchen}
+              className={`h-9 shrink-0 rounded-full px-4 text-[11px] font-semibold shadow-sm transition md:h-10 md:px-5 md:text-xs ${
+                canSendToKitchen
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30 hover:bg-indigo-700"
+                  : "cursor-not-allowed border border-slate-200/90 bg-slate-100 text-slate-400 shadow-none"
               }`}
             >
-              Billing
+              Send
             </button>
- 
-            {/* Mobile cart button */}
             <button
-              onClick={onOpenCart} // Open mobile cart drawer
-              className="relative inline-flex items-center rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 md:hidden"
-              aria-label="Open cart"
+              type="button"
+              onClick={onBilling}
+              disabled={billingDisabled}
+              className={`h-9 shrink-0 rounded-full border px-4 text-[11px] font-semibold shadow-sm transition md:h-10 md:px-5 md:text-xs ${
+                billingDisabled
+                  ? "cursor-not-allowed border-slate-200/90 bg-slate-100 text-slate-400"
+                  : "border-indigo-100/90 bg-white text-slate-800 hover:border-indigo-200 hover:bg-indigo-50/40 hover:shadow-md"
+              }`}
             >
-              {/* Cart icon */}
-              <ShoppingBag className="h-4 w-4" />
- 
-              {/* Cart item count badge */}
-              {cartItemCount > 0 && (
-                <span className="ml-1 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                  {cartItemCount}
-                </span>
-              )}
+              Bill
             </button>
           </div>
         </div>
- 
-        {/* Search and categories (passed from parent) */}
+
         {children}
+        </div>
       </div>
     </header>
   );
 };
- 
+
 export default OrderHeader;

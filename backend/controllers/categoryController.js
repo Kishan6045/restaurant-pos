@@ -43,20 +43,22 @@ const createCategory = async (req, res) => {
 };
 
 
-// Get all categories
+// Get all categories (paginated; keeps product counts via aggregation)
 const getCategories = async (req, res) => {
   try {
-    const categories = await Category.aggregate([
-      {
-        $match: { isActive: true }
-      },
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
+    const skip = (page - 1) * limit;
+
+    const pipeline = [
+      { $match: { isActive: true } },
       {
         $lookup: {
-          from: "products",          // collection name
+          from: "products",
           localField: "_id",
           foreignField: "category",
-          as: "products"
-        }
+          as: "products",
+        },
       },
       {
         $addFields: {
@@ -65,30 +67,40 @@ const getCategories = async (req, res) => {
               $filter: {
                 input: "$products",
                 as: "p",
-                cond: { $eq: ["$$p.isActive", true] }
-              }
-            }
-          }
-        }
+                cond: { $eq: ["$$p.isActive", true] },
+              },
+            },
+          },
+        },
       },
+      { $project: { products: 0 } },
+      { $sort: { createdAt: -1 } },
       {
-        $project: {
-          products: 0
-        }
+        $facet: {
+          data: [{ $skip: skip }, { $limit: limit }],
+          meta: [{ $count: "total" }],
+        },
       },
-      {
-        $sort: { createdAt: -1 }
-      }
-    ]);
+    ];
+
+    const agg = await Category.aggregate(pipeline);
+    const categories = agg[0]?.data ?? [];
+    const total = agg[0]?.meta?.[0]?.total ?? 0;
 
     res.status(200).json({
       success: true,
-      categories
+      categories,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
     });
   } catch (error) {
     console.error("Get categories error:", error);
     res.status(500).json({
-      message: "Failed to fetch categories"
+      message: "Failed to fetch categories",
     });
   }
 };

@@ -95,14 +95,28 @@ exports.deleteStaff = async (req, res) => {
 };
 
 
-// get all staff
+// get all staff (paginated)
 exports.getAllStaff = async (req, res) => {
     try {
-        const staff = await User.find(
-            { role: "cashier" },
-            "-password"
-        );
-        res.json({ staff });
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
+        const skip = (page - 1) * limit;
+        const filter = { role: "cashier" };
+
+        const [staff, total] = await Promise.all([
+            User.find(filter, "-password").sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+            User.countDocuments(filter),
+        ]);
+
+        res.json({
+            staff,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.max(1, Math.ceil(total / limit)),
+            },
+        });
     } catch (error) {
         res.status(500).json({ message: "Fetching staff failed" });
     }

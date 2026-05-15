@@ -1,34 +1,12 @@
-import { createContext, useEffect, useState } from "react";
-import Loader from "../components/Loader";
+import { createContext } from "react";
 
 export const AuthContext = createContext(null);
 
+/** Layout shell only; session handling lives on Login + axios interceptors. */
 const AuthProvider = ({ children }) => {
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        // 🔑 AuthProvider sirf check karega, refresh nahi
-        const refreshToken = localStorage.getItem("refreshToken");
-        setLoading(false);
-    }, []);
-
-    if (loading) {
-        return (
-            // <div className="min-h-screen flex items-center justify-center">
-            //     <p>Checking session...</p>
-            // </div>
-            <Loader
-                label="Checking session..."
-                containerClassName="min-h-screen bg-gray-50"
-            />
-        );
-    }
-
-    return (
-        <AuthContext.Provider value={{}}>
-            {children}
-        </AuthContext.Provider>
-    );
+  return (
+    <AuthContext.Provider value={{}}>{children}</AuthContext.Provider>
+  );
 };
 
 export default AuthProvider;

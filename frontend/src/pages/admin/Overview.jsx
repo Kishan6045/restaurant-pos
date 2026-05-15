@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../../utils/axios";
 import Loader from "../../components/Loader";
- 
- 
+
+
 // Dashboard components
 import StatCard from "../../components/dashboardcharts/StatCard.jsx";
 import PaymentPieChart from "../../components/dashboardcharts/PaymentPieChart.jsx";
 import SalesLineChart from "../../components/dashboardcharts/SalesLineChart.jsx";
 import TopItemsTable from "../../components/dashboardcharts/TopItemsTable.jsx";
- 
+import Select from "../../components/ui/Select.jsx";
+
 const Overview = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -16,7 +17,7 @@ const Overview = () => {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [preset, setPreset] = useState("today"); // default: today
- 
+
   const currency = useMemo(
     () =>
       new Intl.NumberFormat("en-IN", {
@@ -26,7 +27,7 @@ const Overview = () => {
       }),
     []
   );
- 
+
   // ✅ MUST be above any early return (Rules of Hooks)
   const groupedTables = useMemo(() => {
     const list = data?.tables || [];
@@ -50,7 +51,7 @@ const Overview = () => {
     }
     return ordered;
   }, [data]);
- 
+
   const formatDay = (value) => {
     if (!value) return "";
     const d = new Date(value);
@@ -61,7 +62,7 @@ const Overview = () => {
       year: "numeric",
     });
   };
- 
+
   const presetOptions = [
     { value: "today", label: "Today" },
     { value: "yesterday", label: "Yesterday" },
@@ -69,13 +70,13 @@ const Overview = () => {
     { value: "30d", label: "Last 30 days" },
     { value: "custom", label: "Custom" },
   ];
- 
+
   // 🔄 Load dashboard data
   const fetchOverview = async (opts = {}) => {
     try {
       setLoading(true);
       setError("");
- 
+
       const nextPreset = opts.preset ?? preset;
       const params = {};
       if (nextPreset === "custom") {
@@ -84,13 +85,13 @@ const Overview = () => {
       } else {
         params.preset = nextPreset;
       }
- 
+
       const res = await api.get("/api/admin/overview", { params });
- 
+
       setData(res.data);
     } catch (err) {
       console.error("Dashboard load failed:", err);
- 
+
       if (err.response) {
         setError(err.response.data?.message || "API Error");
       } else {
@@ -100,12 +101,12 @@ const Overview = () => {
       setLoading(false);
     }
   };
- 
+
   useEffect(() => {
     fetchOverview({ preset: "today" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
- 
+
   if (loading) {
     return (
       <Loader
@@ -114,7 +115,7 @@ const Overview = () => {
       />
     );
   }
- 
+
   if (error) {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center text-red-500">
@@ -129,7 +130,7 @@ const Overview = () => {
       </div>
     );
   }
- 
+
   if (!data) {
     return (
       <div className="h-[60vh] flex items-center justify-center text-red-500">
@@ -137,12 +138,12 @@ const Overview = () => {
       </div>
     );
   }
- 
+
   const rangeFrom = data?.range?.from;
   const rangeTo = data?.range?.to;
   const rangeLabel =
     rangeFrom && rangeTo ? `${formatDay(rangeFrom)} → ${formatDay(rangeTo)}` : "";
- 
+
   const formatTime = (value) => {
     if (!value) return "";
     const d = new Date(value);
@@ -154,14 +155,14 @@ const Overview = () => {
       minute: "2-digit",
     });
   };
- 
+
   const badge = (text, tone = "gray") => {
     const map = {
       gray: "bg-gray-100 text-gray-700 border-gray-200",
       green: "bg-green-50 text-green-700 border-green-200",
       red: "bg-red-50 text-red-700 border-red-200",
       blue: "bg-blue-50 text-blue-700 border-blue-200",
-      amber: "bg-amber-50 text-amber-700 border-amber-200",
+      indigo: "bg-indigo-50 text-indigo-800 border-indigo-200",
     };
     return (
       <span
@@ -172,11 +173,11 @@ const Overview = () => {
       </span>
     );
   };
- 
+
   return (
     <div className="p-3 sm:p-6 space-y-5 sm:space-y-6 bg-gray-50 min-h-[calc(100vh-120px)]">
       {/* ===================== HEADER / FILTERS ===================== */}
-      <div className="bg-white rounded-2xl shadow-sm border p-4 sm:p-5">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-card p-4 sm:p-5">
         <div className="flex flex-col gap-4 sm:gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
@@ -191,29 +192,25 @@ const Overview = () => {
               )}
             </div>
           </div>
- 
+
           <div className="flex flex-col items-start sm:items-end gap-3 w-full sm:w-auto">
             <div className="flex items-start sm:items-end justify-start sm:justify-end w-full">
               <div className="flex flex-col gap-1 w-full sm:w-auto">
                 <label className="text-xs font-medium text-gray-500">Range</label>
-                <select
+                <Select
+                  aria-label="Date range"
                   value={preset}
-                  onChange={(e) => {
-                    const next = e.target.value;
+                  onChange={(next) => {
                     setPreset(next);
                     if (next !== "custom") fetchOverview({ preset: next });
                   }}
-                  className="h-10 w-full sm:w-auto sm:min-w-[180px] rounded-lg border bg-white px-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {presetOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                  options={presetOptions}
+                  className="w-full sm:w-auto"
+                  buttonClassName="h-10 min-h-0 py-2 sm:min-w-[180px]"
+                />
               </div>
             </div>
- 
+
             {preset === "custom" && (
               <div className="flex flex-col sm:flex-row gap-2 sm:items-end w-full">
                 <input
@@ -239,7 +236,7 @@ const Overview = () => {
           </div>
         </div>
       </div>
- 
+
       {/* ===================== TOP STATS ===================== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard title="Total Sales" value={currency.format(data.totalSales || 0)} />
@@ -247,16 +244,16 @@ const Overview = () => {
         <StatCard title="Staff On Duty" value={data.staffOnDuty ?? 0} />
         <StatCard
           title="Tables (Occupied / Total)"
-          value={`${data.tablesSummary?.occupied ?? 0} / ${data.tablesSummary?.total ?? 0}`}
+          value={`${data.tableSummary?.occupied ?? 0} / ${data.tableSummary?.total ?? 0}`}
         />
       </div>
- 
+
       {/* ===================== SECONDARY STATS ===================== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard title="Available Tables" value={data.tablesSummary?.available ?? 0} />
+        <StatCard title="Available Tables" value={data.tableSummary?.available ?? 0} />
         <StatCard title="Paid Orders" value={data.ordersSummary?.paid ?? 0} />
         <StatCard
-          title="Active Products"                                 
+          title="Active Products"
           value={`${data.menuSummary?.products?.active ?? 0} / ${data.menuSummary?.products?.total ?? 0}`}
         />
         <StatCard
@@ -264,25 +261,25 @@ const Overview = () => {
           value={`${data.menuSummary?.categories?.active ?? 0} / ${data.menuSummary?.categories?.total ?? 0}`}
         />
       </div>
- 
+
       {/* ===================== CHARTS ===================== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <PaymentPieChart data={data.paymentSummary || {}} />
- 
-        <div className="bg-white rounded-2xl shadow-sm border p-4 sm:p-5">
+
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-card p-4 sm:p-5">
           <SalesLineChart data={data.salesGraph || []} />
         </div>
       </div>
- 
+
       {/* ===================== TABLES OVERVIEW ===================== */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-card">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4">
           <div>
             <h3 className="font-semibold text-gray-900">Tables</h3>
             <p className="text-xs text-gray-500">
-              Total: {data.tablesSummary?.total ?? 0} • Occupied:{" "}
-              {data.tablesSummary?.occupied ?? 0} • Available:{" "}
-              {data.tablesSummary?.available ?? 0}
+              Total: {data.tableSummary?.total ?? 0} • Occupied:{" "}
+              {data.tableSummary?.occupied ?? 0} • Available:{" "}
+              {data.tableSummary?.available ?? 0}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -290,7 +287,7 @@ const Overview = () => {
             {badge("Available", "green")}
           </div>
         </div>
- 
+
         {(data.tables || []).length === 0 ? (
           <div className="text-sm text-gray-400 py-8 text-center">No tables found</div>
         ) : (
@@ -309,7 +306,7 @@ const Overview = () => {
                 </div>
               ))}
             </div>
- 
+
             <div className="max-h-[360px] sm:max-h-[420px] overflow-y-auto pr-1 sm:pr-2">
               <div className="space-y-4">
                 {Object.entries(groupedTables).map(([floor, list]) => (
@@ -320,11 +317,11 @@ const Overview = () => {
                         <p className="text-xs text-gray-500">{list.length} tables</p>
                       </div>
                     </div>
- 
+
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 sm:gap-3">
                       {list.map((t) => (
                         <div
-                          key={t._id}
+                          key={t._id ?? t.id}
                           className={`rounded-xl border px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium flex items-center justify-between ${t.status === "occupied"
                             ? "bg-red-50 border-red-200 text-red-800"
                             : "bg-green-50 border-green-200 text-green-800"
@@ -345,35 +342,35 @@ const Overview = () => {
           </div>
         )}
       </div>
- 
+
       {/* ===================== ORDER STATUS ===================== */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-card">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4">
           <h3 className="font-semibold text-gray-900">Order Status</h3>
           <span className="text-xs text-gray-500">
             {(data.orderStatus || []).reduce((sum, s) => sum + (s.count || 0), 0)} total
           </span>
         </div>
- 
+
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           {(data.orderStatus || []).map((status) => (
-            <div key={status._id} className="border rounded-xl p-3 sm:p-4 text-center bg-gray-50">
-              <p className="text-xs sm:text-sm text-gray-500 capitalize">{status._id}</p>
+            <div key={status._id ?? status.id} className="border rounded-xl p-3 sm:p-4 text-center bg-gray-50">
+              <p className="text-xs sm:text-sm text-gray-500 capitalize">{status._id ?? status.id}</p>
               <p className="text-xl font-bold">{status.count}</p>
             </div>
           ))}
         </div>
       </div>
- 
+
       {/* ===================== RECENT ORDERS ===================== */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-card">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4">
           <h3 className="font-semibold text-gray-900">Recent Orders</h3>
           <span className="text-xs text-gray-500">
             {(data.recentOrders || []).length} latest
           </span>
         </div>
- 
+
         {(data.recentOrders || []).length === 0 ? (
           <div className="text-sm text-gray-400 py-8 text-center">
             No orders in selected range
@@ -395,7 +392,7 @@ const Overview = () => {
                 <tbody>
                   {(data.recentOrders || []).map((o) => (
                     <tr
-                      key={o._id}
+                      key={o._id ?? o.id}
                       className="border-b last:border-b-0 hover:bg-gray-50 transition-colors"
                     >
                       <td className="py-2.5 sm:py-3 px-2.5 sm:px-3 text-gray-700 tabular-nums whitespace-nowrap">
@@ -421,7 +418,7 @@ const Overview = () => {
                           o.orderStatus === "open"
                             ? "blue"
                             : o.orderStatus === "billed"
-                              ? "amber"
+                              ? "indigo"
                               : "green"
                         )}
                       </td>
@@ -452,11 +449,11 @@ const Overview = () => {
           </div>
         )}
       </div>
- 
+
       {/* ===================== TOP ITEMS ===================== */}
       {data.topItems && data.topItems.length > 0 && <TopItemsTable items={data.topItems} />}
     </div>
   );
 };
- 
+
 export default Overview;

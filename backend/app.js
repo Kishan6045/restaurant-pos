@@ -6,8 +6,14 @@ const cors = require("cors");  // frontend and backend request kar ne ka allow k
 const app = express();
 
 
-//middleware 
-app.use(cors());
+//middleware
+// Must not use wildcard origin with credentials — axios uses withCredentials: true
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(require("./middlewares/responseLogger")); // console me print all

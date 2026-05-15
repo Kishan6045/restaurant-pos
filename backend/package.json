@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "migrate:order-numbers": "node scripts/migrate-order-numbers.js"
   },
   "keywords": [],
   "author": "",

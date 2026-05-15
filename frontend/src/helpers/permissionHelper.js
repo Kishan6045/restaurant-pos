@@ -8,7 +8,10 @@ export const togglePermission = ({
   let list = prevData[role] || [];
 
   const [module, action] = perm.split(".");
-  const moduleConfig = modules.find(m => m.key === module);
+  const moduleConfig = modules.find((m) => m.key === module);
+  if (!moduleConfig?.actions) {
+    return { ...prevData, [role]: list };
+  }
 
   const baseAction = moduleConfig.actions.includes("read")
     ? "read"

@@ -1,152 +1,104 @@
-// Icons import
-import { X, Trash2, Minus, Plus } from "lucide-react";
+import { X, Trash2, Minus, Plus, CheckCircle } from "lucide-react";
+import { docId } from "../../../helpers/docId";
+import { POS, posLineImageSrc } from "../../../components/cashier/posListTheme";
 
-// Mobile cart drawer component (shown only on mobile)
 const MobileCartDrawer = ({
-  onClose,          // Close drawer handler
-  cart,             // Cart items list
-  onRemoveItem,     // Remove item from cart
-  onChangeQty,      // Increase / decrease quantity
-  subtotal,         // Subtotal amount
-  tax,              // Tax amount
-  // discount,         // Discount amount
-  grandTotal,       // Final total amount
-  onSendToKitchen,  // Confirm order handler
-  sending,          // Loading state while sending order
+  onClose,
+  cart,
+  onRemoveItem,
+  onChangeQty,
+  subtotal,
+  tax,
+  grandTotal,
+  onSendToKitchen,
+  sending,
 }) => {
   return (
-    // Full screen overlay
-    <div className="fixed inset-0 z-50 lg:hidden">
-
-      {/* Background overlay */}
-      <div
-        className="absolute inset-0 bg-black/40"
-        onClick={onClose} // Close drawer when clicking outside
-      />
-
-      {/* Bottom drawer container */}
-      <div className="absolute inset-x-0 bottom-0 max-h-[85vh] rounded-t-2xl bg-white shadow-lg">
-
-        {/* Drawer header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-          <h3 className="text-base font-semibold text-slate-900">
-            Current Order
-          </h3>
-
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            className="rounded-md p-1 text-slate-600 hover:bg-slate-100"
-          >
-            <X className="h-5 w-5" />
+    <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Cart">
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} aria-hidden />
+      <div className="absolute inset-x-0 bottom-0 flex max-h-[80vh] flex-col rounded-t-3xl border border-indigo-100/90 bg-gradient-to-b from-white to-indigo-50/40 shadow-2xl shadow-indigo-950/20 ring-1 ring-indigo-950/[0.06]">
+        <div className="flex items-center justify-between border-b border-indigo-100/70 px-3 py-2.5">
+          <h3 className="text-sm font-semibold text-slate-900">Cart</h3>
+          <button type="button" onClick={onClose} className="rounded-xl p-1.5 text-slate-500 transition hover:bg-indigo-50" aria-label="Close">
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Cart items section */}
-        <div className="max-h-[50vh] overflow-y-auto p-4">
-
-          {/* Empty cart state */}
+        <div className="min-h-0 flex-1 overflow-y-auto p-2">
           {cart.length === 0 ? (
-            <div className="py-10 text-center text-sm text-slate-500">
-              Your cart is empty.
-            </div>
+            <p className="py-8 text-center text-xs text-slate-400">Empty</p>
           ) : (
-            <div className="space-y-3">
-
-              {/* Cart items list */}
-              {cart.map((item) => (
-                <div
-                  key={item._id} // Unique key
-                  className="rounded-md border border-slate-200 p-3"
-                >
-                  {/* Item details and remove button */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-900">
-                        {item.name}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        ₹{item.price} each
+            <div className={POS.list}>
+              {cart.map((item) => {
+                const id = docId(item);
+                const price = Number(item?.price ?? 0);
+                const qty = item?.qty ?? 1;
+                const src = posLineImageSrc(item);
+                return (
+                  <div key={id} className={POS.rowStatic}>
+                    <img
+                      src={src}
+                      alt=""
+                      className={POS.thumb}
+                      onError={(e) => {
+                        e.target.src = "/no-image.png";
+                      }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className={POS.title}>{item?.name}</p>
+                      <p className={POS.sub}>
+                        ₹{price.toFixed(0)} each
                       </p>
                     </div>
-
-                    {/* Remove item */}
-                    <button
-                      onClick={() => onRemoveItem(item._id)}
-                      className="text-rose-500"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  {/* Quantity controls and item total */}
-                  <div className="mt-2 flex items-center justify-between">
-                    <div className="flex items-center gap-1 rounded-md border border-slate-200 px-1">
-
-                      {/* Decrease quantity */}
-                      <button
-                        onClick={() => onChangeQty(item._id, -1)}
-                        className="p-1 text-slate-600"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </button>
-
-                      {/* Quantity value */}
-                      <span className="w-6 text-center text-sm font-semibold">
-                        {item.qty}
-                      </span>
-
-                      {/* Increase quantity */}
-                      <button
-                        onClick={() => onChangeQty(item._id, 1)}
-                        className="p-1 text-slate-600"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <span className={POS.priceSm}>₹{(price * qty).toFixed(0)}</span>
+                      <div className="flex items-center gap-0.5">
+                        <div className="flex items-center overflow-hidden rounded-xl border border-indigo-100/90 bg-indigo-50/40 shadow-sm">
+                          <button type="button" onClick={() => onChangeQty(id, -1)} className="px-2 py-1.5 hover:bg-white">
+                            <Minus className="h-3.5 w-3.5 text-slate-600" />
+                          </button>
+                          <span className="w-5 text-center text-[10px] font-semibold tabular-nums">{qty}</span>
+                          <button type="button" onClick={() => onChangeQty(id, 1)} className="px-2 py-1.5 hover:bg-white">
+                            <Plus className="h-3.5 w-3.5 text-slate-600" />
+                          </button>
+                        </div>
+                        <button type="button" onClick={() => onRemoveItem(id)} className="p-1 text-slate-400 hover:text-rose-600">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
-
-                    {/* Item total price */}
-                    <span className="text-xs font-semibold text-slate-700">
-                      ₹{(Number(item.price || 0) * item.qty).toFixed(2)}
-                    </span>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
 
-        {/* Order summary and confirm button */}
         {cart.length > 0 && (
-          <div className="border-t border-slate-200 p-4">
-
-            {/* Price breakdown */}
-            <div className="space-y-2 text-sm text-slate-600">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>₹{subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tax (5%)</span>
-                <span>₹{tax.toFixed(2)}</span>
-              </div>
-              {/* <div className="flex justify-between">
-                <span>Discount</span>
-                <span>-₹{discount.toFixed(2)}</span>
-              </div> */}
-              <div className="flex justify-between border-t border-slate-200 pt-2 text-sm font-semibold text-slate-900">
-                <span>Total</span>
-                <span>₹{grandTotal.toFixed(2)}</span>
-              </div>
+          <div className="shrink-0 border-t border-indigo-100/70 bg-indigo-50/35 p-3">
+            <div className="mb-1 flex justify-between text-[10px] text-slate-600">
+              <span>Sub</span>
+              <span>₹{Number(subtotal || 0).toFixed(0)}</span>
             </div>
-
-            {/* Confirm order button */}
+            <div className="mb-1 flex justify-between text-[10px] text-slate-600">
+              <span>Tax</span>
+              <span>₹{Number(tax || 0).toFixed(0)}</span>
+            </div>
+            <div className="mb-2 flex justify-between text-xs font-semibold text-slate-900">
+              <span>Total</span>
+              <span>₹{Number(grandTotal || 0).toFixed(0)}</span>
+            </div>
             <button
+              type="button"
               onClick={onSendToKitchen}
               disabled={sending}
-              className="mt-3 w-full rounded-md bg-emerald-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-indigo-600 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 disabled:opacity-50"
             >
-              {sending ? "Sending..." : "Confirm Order"}
+              {sending ? "…" : (
+                <>
+                  <CheckCircle className="h-3.5 w-3.5" /> Send to kitchen
+                </>
+              )}
             </button>
           </div>
         )}

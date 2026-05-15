@@ -24,7 +24,13 @@ function App() {
   return (
     <BrowserRouter>  {/*without relod login */}
       <AuthProvider>
-        <ToastContainer position="top-right" autoClose={3000} />
+        <ToastContainer
+          position="top-right"
+          autoClose={2800}
+          theme="light"
+          toastClassName="!rounded-xl !shadow-card-lg !border !border-slate-200/80"
+          bodyClassName="!text-sm !font-medium"
+        />
 
         <Routes>
           {/* default */}

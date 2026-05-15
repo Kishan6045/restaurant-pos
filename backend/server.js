@@ -13,7 +13,14 @@ const PORT = process.env.PORT || 5000;
 
 
 //connect database
-connectDB();
+connectDB()
+  .then(() => require("./services/assignMissingOrderNumbers")())
+  .then((n) => {
+    if (n > 0) {
+      console.log(chalk.cyan.bold(` ✔ Order # backfill: ${n} legacy orders (IST daily sequence) `));
+    }
+  })
+  .catch((e) => console.error(chalk.red("Order # backfill failed:"), e.message));
 
 // admin create database 
 createAdmin();

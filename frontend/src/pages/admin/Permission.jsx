@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../../utils/axios";
 import { toast } from "react-toastify";
 import { togglePermission } from "../../helpers/permissionHelper";
+import AdminPageShell from "../../components/admin/AdminPageShell";
 
 const ROLES = ["admin", "cashier", "kitchen"];
 
@@ -30,12 +31,16 @@ const PermissionManagement = () => {
   const [isEditing, setIsEditing] = useState(false);
 
   const load = async () => {
-    const res = await api.get("/api/permissions/matrix");
-    setData({
-      admin: res.data.admin || [],
-      cashier: res.data.cashier || [],
-      kitchen: res.data.kitchen || []
-    });
+    try {
+      const res = await api.get("/api/permissions/matrix");
+      setData({
+        admin: res.data.admin || [],
+        cashier: res.data.cashier || [],
+        kitchen: res.data.kitchen || [],
+      });
+    } catch {
+      toast.error("Failed to load permissions");
+    }
   };
 
   useEffect(() => {
@@ -75,42 +80,40 @@ const PermissionManagement = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 bg-white rounded shadow">
-
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row justify-between gap-3 mb-4">
-        <h2 className="text-lg font-semibold">Permission Management</h2>
-
+    <AdminPageShell title="Permissions">
+      <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         {!isEditing ? (
           <button
+            type="button"
             onClick={() => setIsEditing(true)}
-            className="px-4 py-2 bg-gray-600 text-white rounded"
+            className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
           >
             Edit
           </button>
         ) : (
           <button
+            type="button"
             onClick={save}
             disabled={saving}
-            className="px-4 py-2 bg-blue-600 text-white rounded"
+            className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-60"
           >
-            Save
+            {saving ? "Saving…" : "Save"}
           </button>
         )}
       </div>
 
       {/* ✅ SINGLE SCROLL WRAPPER (BOTTOM SCROLLER HERE) */}
-      <div className="border rounded h-[70vh] overflow-auto">
+      <div className="h-[min(70vh,720px)] overflow-auto bg-white">
 
         <table className="min-w-[1600px] text-sm border-collapse relative">
 
-          <thead className="bg-gray-100 sticky top-0 z-10">
+          <thead className="sticky top-0 z-10 bg-slate-100">
             <tr>
-              <th className="p-3 text-left sticky left-0 bg-gray-100 z-30 border-r">
+              <th className="sticky left-0 z-30 border-b border-r border-slate-200 bg-slate-100 p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
                 Module
               </th>
               {ROLES.map(role => (
-                <th key={role} className="p-3 text-center uppercase">
+                <th key={role} className="border-b border-slate-200 p-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600">
                   {role}
                 </th>
               ))}
@@ -119,9 +122,9 @@ const PermissionManagement = () => {
 
           <tbody>
             {MODULES.map(m => (
-              <tr key={m.key} className="border-t hover:bg-gray-50">
+              <tr key={m.key} className="border-b border-slate-100 hover:bg-white/80">
 
-                <td className="p-3 font-medium whitespace-nowrap sticky left-0 bg-white z-20 border-r">
+                <td className="sticky left-0 z-20 whitespace-nowrap border-r border-slate-200 bg-white p-3 text-sm font-medium text-slate-800 shadow-[2px_0_8px_-4px_rgba(0,0,0,0.08)]">
                   {m.label}
                 </td>
 
@@ -137,7 +140,7 @@ const PermissionManagement = () => {
                               checked={has(role, key)}
                               disabled={!isEditing}
                               onChange={() => toggle(role, key)}
-                              className="accent-blue-600"
+                              className="accent-indigo-600"
                             />
                             {a}
                           </label>
@@ -154,10 +157,10 @@ const PermissionManagement = () => {
         </table>
       </div>
 
-      <div className="text-xs text-gray-400 text-center mt-2 sm:hidden">
-        ← Swipe left / right →
+      <div className="border-t border-slate-100 bg-slate-50/80 px-4 py-2 text-center text-xs text-slate-400 sm:hidden">
+        ← Swipe to see all columns →
       </div>
-    </div>
+    </AdminPageShell>
   );
 };
 

@@ -1,16 +1,8 @@
 import axios from "axios";
 import { log, logError } from "./logger"; // console logging utility
 
-/* ---------------------------------------------------
-   Backend selection (SQL / Mongo)
---------------------------------------------------- */
-
-const backendType = import.meta.env.VITE_BACKEND;
-
 const BASE_URL =
-  backendType === "sql"
-    ? import.meta.env.VITE_API_SQL     // SQL backend
-    : import.meta.env.VITE_API_MONGO;  // Mongo backend
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 /* ---------------------------------------------------
    Axios instance
@@ -47,7 +39,6 @@ api.interceptors.request.use(
     log("API REQUEST", {
       method: config.method?.toUpperCase(),
       url: config.url,
-      backend: backendType,
     });
 
     // Access token localStorage mathi laiye
@@ -126,19 +117,22 @@ api.interceptors.response.use(
 
       try {
         /* ---------------------------------------------
-           🔄 REFRESH TOKEN API CALL
-           👉 refresh token cookie mathi automatic jase
+           REFRESH TOKEN API (token in JSON body)
         --------------------------------------------- */
+        const refreshToken = localStorage.getItem("refreshToken");
         const res = await axios.post(
           `${BASE_URL}/api/auth/refresh`,
-          {},
-          { withCredentials: true } // 🔐 MUST
+          { refreshToken },
+          { withCredentials: true }
         );
 
         const newAccessToken = res.data.accessToken;
 
         // New access token save
         localStorage.setItem("accessToken", newAccessToken);
+        if (res.data.refreshToken) {
+          localStorage.setItem("refreshToken", res.data.refreshToken);
+        }
 
         // Queue ma badha failed requests retry
         processQueue(null, newAccessToken);

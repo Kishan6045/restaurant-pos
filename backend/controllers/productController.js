@@ -47,18 +47,35 @@ const createProduct = async (req, res) => {
 };
 
 
-// get products
+// get products (paginated; drops rows whose category populate failed)
 const getProducts = async (req, res) => {
     try {
-        const products = await Product
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 500);
+
+        const allProducts = await Product
             .find({ isActive: true })
             .populate({
                 path: "category",
                 match: { isActive: true }
             })
-            .sort({ createdAt: -1 });
-        const finalProducts = products.filter(p => p.category); // remove products with inactive category
-        res.status(200).json({ products: finalProducts });
+            .sort({ createdAt: -1 })
+            .lean();
+
+        const filtered = allProducts.filter((p) => p.category);
+        const total = filtered.length;
+        const skip = (page - 1) * limit;
+        const products = filtered.slice(skip, skip + limit);
+
+        res.status(200).json({
+            products,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.max(1, Math.ceil(total / limit)),
+            },
+        });
 
     } catch (error) {
         res.status(500).json({ message: "Server error", error });

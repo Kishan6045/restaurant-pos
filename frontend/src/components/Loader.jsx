@@ -5,8 +5,8 @@ const Loader = ({
   showLabel = true,
   size = 28,
   containerClassName = "",
-  spinnerClassName = "",
-  labelClassName = "",
+  spinnerClassName = "text-indigo-600",
+  labelClassName = "text-slate-500",
 }) => {
   const shouldShowLabel = showLabel && Boolean(label);
 
@@ -14,11 +14,15 @@ const Loader = ({
     <div
       role="status"
       aria-live="polite"
-      className={`flex flex-col items-center justify-center gap-2 text-gray-500 ${containerClassName}`}
+      className={`flex flex-col items-center justify-center gap-3 ${containerClassName}`}
     >
-      <Loader2 className={`animate-spin ${spinnerClassName}`} size={size} />
+      <Loader2
+        className={`animate-spin drop-shadow-sm ${spinnerClassName}`}
+        size={size}
+        aria-hidden
+      />
       {shouldShowLabel ? (
-        <p className={`text-sm ${labelClassName}`}>{label}</p>
+        <p className={`text-sm font-medium ${labelClassName}`}>{label}</p>
       ) : null}
     </div>
   );

@@ -12,7 +12,7 @@ import {
 const COLOR_MAP = {
   CASH: "#22c55e",   // green
   UPI: "#3b82f6",    // blue
-  CARD: "#f97316",   // orange
+  CARD: "#6366f1",   // indigo
 };
  
 const PaymentPieChart = ({ data = {} }) => {
@@ -37,9 +37,9 @@ const PaymentPieChart = ({ data = {} }) => {
   }
  
   return (
-    <div className="bg-white rounded-xl shadow p-4">
-      <h3 className="font-semibold text-lg mb-3">
-        Payment Methods
+    <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-card sm:p-5">
+      <h3 className="mb-3 text-lg font-bold text-slate-900">
+        Payment methods
       </h3>
  
       <ResponsiveContainer width="100%" height={300}>

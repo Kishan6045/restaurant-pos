@@ -101,11 +101,33 @@ const updateTable = async (req, res) => {
 
 
 
-// GET ALL TABLES
+// GET ALL TABLES (paginated; supports cashier `limit` up to 500)
 const getTables = async (req, res) => {
     try {
-        const tables = await Table.find().sort({ tableNumber: 1 });
-        res.json({ tables });
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limitRaw = parseInt(req.query.limit, 10);
+        const limit = Math.min(Math.max(limitRaw || 10, 1), 500);
+        const skip = (page - 1) * limit;
+
+        const filter = {};
+        if (req.query.floor) {
+            filter.floor = req.query.floor;
+        }
+
+        const [tables, total] = await Promise.all([
+            Table.find(filter).sort({ floor: 1, tableNumber: 1 }).skip(skip).limit(limit).lean(),
+            Table.countDocuments(filter),
+        ]);
+
+        res.json({
+            tables,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.max(1, Math.ceil(total / limit)),
+            },
+        });
     } catch (error) {
         res.status(500).json({ message: "Server error" });
     }

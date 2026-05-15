@@ -4,31 +4,47 @@ import { Pencil, Trash2, X, Eye, EyeOff } from "lucide-react";
 import { toast } from "react-toastify";
 import {
   useReactTable,
-  getCoreRowModel,
-  getPaginationRowModel,
-  flexRender,
-} from "@tanstack/react-table";
+getCoreRowModel,
+    flexRender,
+  } from "@tanstack/react-table";
 import Loader from "../../components/Loader";
+import PaginationBar from "../../components/PaginationBar";
+import AdminPageShell from "../../components/admin/AdminPageShell";
+import { docId } from "../../helpers/docId";
+import Select from "../../components/ui/Select";
+
+const FLOORS = ["Ground", "First", "Second"];
+
+const FLOOR_ACCESS_OPTIONS = [
+  { value: "", label: "All floors" },
+  ...FLOORS.map((f) => ({ value: f, label: `${f} only` })),
+];
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "all", label: "All" },
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+];
 
 const Staff = () => {
-
-  /* ================= STATE ================= */
-
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editStaff, setEditStaff] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);                                
-  const [showEditPassword, setShowEditPassword] = useState(false);   
-
+  const [showPassword, setShowPassword] = useState(false);
+  const [showEditPassword, setShowEditPassword] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
+    assignedFloor: "",
   });
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1, limit: 10 });
+  const LIMIT = 10;
 
   /* ================= VALIDATION REGEX ================= */
 
@@ -37,11 +53,12 @@ const Staff = () => {
 
   /* ================= LOAD STAFF ================= */
 
-  const loadStaff = useCallback(async () => {
+  const loadStaff = useCallback(async (pageNum = 1) => {
     setLoading(true);
     try {
-      const res = await api.get("/api/staff");
+      const res = await api.get("/api/staff", { params: { page: pageNum, limit: LIMIT } });
       setStaff(res.data.staff || []);
+      setPagination(res.data.pagination || { total: 0, totalPages: 1, limit: LIMIT });
     } catch (e) {
       toast.error("Failed to load staff");
     } finally {
@@ -50,8 +67,8 @@ const Staff = () => {
   }, []);
 
   useEffect(() => {
-    loadStaff();
-  }, [loadStaff]);
+    loadStaff(page);
+  }, [page]);
 
   /* ================= ADD STAFF ================= */
 
@@ -95,11 +112,12 @@ const Staff = () => {
         name,
         email,
         password,
+        assignedFloor: form.assignedFloor || undefined,
       });
 
       toast.success("Cashier added");
-      setForm({ name: "", email: "", password: "" });
-      loadStaff();
+      setForm({ name: "", email: "", password: "", assignedFloor: "" });
+      loadStaff(page);
     } catch (e) {
       toast.error(e.response?.data?.message || "Add failed");
     }
@@ -119,6 +137,7 @@ const Staff = () => {
     }
 
     const payload = { name };
+    if (editStaff.assignedFloor !== undefined) payload.assignedFloor = editStaff.assignedFloor || null;
 
     if (password) {
       if (password.length < 6) {
@@ -135,10 +154,10 @@ const Staff = () => {
     }
 
     try {
-      await api.put(`/api/staff/${editStaff.id}`, payload);
+      await api.put(`/api/staff/${docId(editStaff)}`, payload);
       toast.success("Updated");
       setEditStaff(null);
-      loadStaff();
+      loadStaff(page);
     } catch (e) {
       toast.error(e.response?.data?.message || "Update failed");
     }
@@ -152,7 +171,7 @@ const Staff = () => {
     try {
       await api.delete(`/api/staff/${id}`);
       toast.success("Staff deactivated");
-      loadStaff();
+      loadStaff(page);
     } catch (e) {
       toast.error(e.response?.data?.message || "Action failed");
     }
@@ -184,6 +203,14 @@ const Staff = () => {
       { accessorKey: "name", header: "Name" },
       { accessorKey: "email", header: "Email" },
       {
+        header: "Floor",
+        cell: ({ row }) => (
+          <span className="text-sm text-gray-600">
+            {row.original.assignedFloor || "All"}
+          </span>
+        ),
+      },
+      {
         header: "Status",
         cell: ({ row }) => (
           <span
@@ -203,6 +230,7 @@ const Staff = () => {
           return (
             <div className="flex gap-3 justify-end">
               <button
+                type="button"
                 onClick={() =>
                   setEditStaff({ ...s, password: "" })
                 }
@@ -211,7 +239,7 @@ const Staff = () => {
               </button>
 
               {s.isActive && (
-                <button onClick={() => toggleStatus(s.id)}>
+                <button type="button" onClick={() => toggleStatus(docId(s))}>
                   <Trash2 size={16} />
                 </button>
               )}
@@ -227,21 +255,20 @@ const Staff = () => {
     data: filteredStaff,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: 8 } },
   });
 
   /* ================= UI ================= */
 
   return (
-    <div className="h-full flex flex-col bg-gray-100 overflow-hidden">
-      <div className="flex-1 flex flex-col max-w-7xl w-full mx-auto p-4 gap-4 overflow-hidden">
+    <>
+    <AdminPageShell title="Staff">
+      <div className="space-y-4 p-4 sm:p-6">
 
         {/* ADD SECTION */}
-        <div className="bg-white rounded-xl shadow border p-4 shrink-0">
+        <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-4 shadow-sm shrink-0">
           <h2 className="text-lg font-semibold mb-3">Add Cashier</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
             <input
               placeholder="Name"
               className="border rounded-lg px-3 py-2 text-sm"
@@ -280,8 +307,17 @@ const Staff = () => {
               </button>
             </div>
 
+            <Select
+              aria-label="Floor access for cashier"
+              value={form.assignedFloor}
+              onChange={(v) => setForm((f) => ({ ...f, assignedFloor: v }))}
+              options={FLOOR_ACCESS_OPTIONS}
+              placeholder="All floors"
+              className="w-full min-w-[140px] sm:w-auto"
+            />
 
             <button
+              type="button"
               onClick={addStaff}
               className="bg-black text-white rounded-md px-2 py-2 text-sm w-auto self-start hover:bg-gray-900 transition"
             >
@@ -300,21 +336,20 @@ const Staff = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
 
-          <select
+          <Select
+            aria-label="Filter by status"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm"
-          >
-            <option value="all">All</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+            onChange={setStatusFilter}
+            options={STATUS_FILTER_OPTIONS}
+            className="w-36 shrink-0"
+            variant="compact"
+          />
         </div>
 
         {/* TABLE */}
-        <div className="flex-1 bg-white rounded-xl shadow border flex flex-col overflow-hidden">
-          <div className="px-4 py-3 border-b bg-gray-50 font-semibold shrink-0">
-            Cashier List
+        <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="shrink-0 border-b border-slate-100 bg-slate-50/80 px-4 py-3 text-sm font-semibold text-slate-800">
+            Cashier list
           </div>
 
           <div className="flex-1 overflow-y-auto">
@@ -355,31 +390,17 @@ const Staff = () => {
             )}
           </div>
 
-          {/* PAGINATION */}
-          <div className="flex justify-between items-center px-4 py-2 border-t bg-gray-50 shrink-0">
-            <button
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-              className="px-3 py-1 border rounded"
-            >
-              Prev
-            </button>
-
-            <span className="text-sm">
-              Page {table.getState().pagination.pageIndex + 1} of{" "}
-              {table.getPageCount()}
-            </span>
-
-            <button
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-              className="px-3 py-1 border rounded"
-            >
-              Next
-            </button>
-          </div>
+          <PaginationBar
+            page={page}
+            totalPages={pagination.totalPages}
+            total={pagination.total}
+            limit={pagination.limit}
+            onPageChange={setPage}
+            loading={loading}
+          />
         </div>
       </div>
+    </AdminPageShell>
 
       {/* EDIT MODAL */}
       {editStaff && (
@@ -387,11 +408,19 @@ const Staff = () => {
           <div className="bg-white rounded-xl p-6 w-[90%] max-w-md shadow-xl">
             <div className="flex justify-between mb-4">
               <h3 className="text-lg font-semibold">Edit Cashier</h3>
-              <X onClick={() => setEditStaff(null)} />
+              <X
+                role="button"
+                tabIndex={0}
+                onClick={() => setEditStaff(null)}
+                onKeyDown={(e) => e.key === "Enter" && setEditStaff(null)}
+                className="cursor-pointer text-slate-500 hover:text-slate-800"
+                aria-label="Close"
+              />
             </div>
 
             <input
               className="border rounded-lg px-3 py-2 w-full mb-3"
+              placeholder="Name"
               value={editStaff.name}
               onChange={(e) =>
                 setEditStaff({
@@ -424,9 +453,20 @@ const Staff = () => {
               </button>
             </div>
 
-
+            <label className="mb-1 mt-3 block text-sm font-medium text-gray-700">Floor access</label>
+            <Select
+              aria-label="Floor access"
+              value={editStaff.assignedFloor ?? ""}
+              onChange={(v) =>
+                setEditStaff((s) => (s ? { ...s, assignedFloor: v || null } : s))
+              }
+              options={FLOOR_ACCESS_OPTIONS}
+              placeholder="All floors"
+              className="w-full"
+            />
 
             <button
+              type="button"
               onClick={updateStaff}
               className="mt-4 w-full bg-black text-white py-2 rounded-lg"
             >
@@ -435,7 +475,7 @@ const Staff = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

@@ -10,13 +10,21 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
-
+import PaginationBar from "../../components/PaginationBar";
+import AdminPageShell from "../../components/admin/AdminPageShell";
+import { docId } from "../../helpers/docId";
+import Select from "../../components/ui/Select";
 
 const CUISINES = ["Gujarati", "Punjabi", "Chinese", "Common"];
+
+const CUISINE_OPTIONS = CUISINES.map((c) => ({ value: c, label: c }));
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1, limit: 10 });
+  const LIMIT = 10;
 
   // add
   const [name, setName] = useState("");
@@ -41,11 +49,12 @@ const Categories = () => {
 
 
   // ================= FETCH CATEGORIES ================= //
-  const loadCategories = async () => {
+  const loadCategories = async (pageNum = 1) => {
     try {
       setLoading(true);
-      const res = await api.get("/api/categories");  // fetch all categories
+      const res = await api.get("/api/categories", { params: { page: pageNum, limit: LIMIT } });
       setCategories(res.data.categories || []);
+      setPagination(res.data.pagination || { total: 0, totalPages: 1, limit: LIMIT });
     } catch {
       toast.error("Failed to load categories");
     } finally {
@@ -53,9 +62,9 @@ const Categories = () => {
     }
   };
 
-  useEffect(() => {   // on component mount varna page refresh par bhi call ho jayega
-    loadCategories();
-  }, []);
+  useEffect(() => {
+    loadCategories(page);
+  }, [page]);
 
 
   // ================= ADD CATEGORY ================= //
@@ -69,7 +78,7 @@ const Categories = () => {
       toast.success("Category added");
       setName("");   // reset fields
       setCuisine("");  // reset fields
-      loadCategories();  // reload categories to show the new one
+      loadCategories(page);
 
     } catch (err) {
       toast.error(
@@ -91,7 +100,7 @@ const Categories = () => {
 
       toast.success("Category updated");
       setEditOpen(false);  // close edit modal
-      loadCategories();   // reload categories to show updates
+      loadCategories(page);
 
     } catch (err) {
       toast.error(
@@ -106,7 +115,7 @@ const Categories = () => {
     try {
       await api.delete(`/api/categories/${id}`);
       toast.success("Category deleted");
-      loadCategories();
+      loadCategories(page);
     } catch {
       toast.error("Delete failed");
     }
@@ -120,7 +129,7 @@ const Categories = () => {
     setOpenMenuId(null);   // close the dropdown menu
 
     try {
-      const res = await api.get(`/api/categories/${cat.id}/products`); // fetch products under category
+      const res = await api.get(`/api/categories/${docId(cat)}/products`); // fetch products under category
       setViewProducts(res.data.products || []);  // set the products to state
     } catch {
       toast.error("Failed to load products");
@@ -137,19 +146,15 @@ const Categories = () => {
 
 
   return (
+    <>
     <div
-      className="p-3 h-full bg-gray-100 flex flex-col overflow-hidden"  //puri scren scroll na ho jaye 
-      onClick={() => setOpenMenuId(null)}  // close dropdown on outside click
+      className="h-full"
+      onClick={() => setOpenMenuId(null)}
     >
-      {/* HEADER */}
-      <div className="sticky top-0 z-40 bg-gray-100 pb-4">
-        <h1 className="text-xl font-semibold text-gray-900">
-          Menu Categories
-        </h1>
-      </div>
-
+    <AdminPageShell title="Categories">
+      <div className="flex flex-col gap-4 p-4 sm:p-6">
       {/* ADD CATEGORY */}
-      <div className="mb-6 bg-white border rounded-xl px-4 py-3 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 shadow-sm">
         <div className="flex flex-col sm:flex-row gap-3 items-center">
           <input
             value={name}
@@ -158,20 +163,14 @@ const Categories = () => {
             className="flex-1 border rounded-lg px-4 py-2 text-sm outline-none"
           />
 
-          <select
-            value={cuisine}  // selected cuisine
-            onChange={e => setCuisine(e.target.value)}  // update cuisine on change
-            className="border rounded-lg px-3 py-2 text-sm"
-          >
-            <option value="" disabled>
-              Select Cuisine
-            </option>
-            {CUISINES.map(c => (   // map through cuisines
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+          <Select
+            aria-label="Cuisine for new category"
+            value={cuisine}
+            onChange={setCuisine}
+            options={CUISINE_OPTIONS}
+            placeholder="Select cuisine"
+            className="w-full sm:w-48 shrink-0"
+          />
 
           <button
             onClick={addCategory}
@@ -183,13 +182,13 @@ const Categories = () => {
       </div>
 
       {/* FILTER */}
-      <div className="flex gap-2 mb-4 flex-wrap">
+      <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setActiveCuisine("")}   // reset filter to show all
-          className={`px-4 py-1.5 rounded-full text-sm border  
+          className={`rounded-full border px-4 py-1.5 text-sm transition
             ${activeCuisine === ""
-              ? "bg-gray-900 text-white"
-              : "bg-white text-gray-700"}`}
+              ? "border-slate-900 bg-slate-900 text-white shadow-sm"
+              : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"}`}
         >
           All
         </button>
@@ -198,10 +197,10 @@ const Categories = () => {
           <button
             key={c}    // unique key
             onClick={() => setActiveCuisine(c)}  // set active cuisine filter
-            className={`px-4 py-1.5 rounded-full text-sm border
+            className={`rounded-full border px-4 py-1.5 text-sm transition
               ${activeCuisine === c
-                ? "bg-gray-900 text-white"
-                : "bg-white text-gray-700"}`}
+                ? "border-slate-900 bg-slate-900 text-white shadow-sm"
+                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"}`}
           >
             {c}
           </button>
@@ -209,14 +208,15 @@ const Categories = () => {
       </div>
 
       {/* GRID (ONLY THIS SCROLLS) */}
-      <div className="bg-white rounded-xl border shadow-sm p-4 flex-1 overflow-y-auto">
+      <div className="flex min-h-[280px] flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex-1 overflow-y-auto p-4 min-h-0">
         {loading ? (
           <Loader label="Loading categories..." containerClassName="py-20" />
         ) : (   // condition false ho to ye chalta hai
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filtered.map(cat => (
               <div
-                key={cat.id}
+                key={docId(cat)}
                 className="relative rounded-lg border p-4 h-[110px]
                         bg-gradient-to-br from-gray-50 to-gray-100
                         hover:shadow-md transition"
@@ -229,7 +229,7 @@ const Categories = () => {
                 <button
                   onClick={(e) => { // stop propagation to prevent card click
                     e.stopPropagation();  // card ke andar click par dropdown band na ho jaye
-                    setOpenMenuId(openMenuId === cat.id ? null : cat.id);
+                    setOpenMenuId(openMenuId === docId(cat) ? null : docId(cat));
                   }}
                   className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
                 >
@@ -254,7 +254,7 @@ const Categories = () => {
                 </span>
 
                 {/* DROPDOWN */}
-                {openMenuId === cat.id && (  // show dropdown if this menu is open
+                {openMenuId === docId(cat) && (  // show dropdown if this menu is open
                   <div className="absolute right-3 top-10 bg-white border rounded-lg shadow-lg w-32 z-40">
                     <button
                       onClick={(e) => {  // stop propagation to prevent card click
@@ -269,7 +269,7 @@ const Categories = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();  // stop propagation to prevent card click
-                        setEditId(cat.id);   // set the id of category to edit
+                        setEditId(docId(cat));   // set the id of category to edit
                         setEditName(cat.name);  // set the name of category to edit
                         setEditCuisine(cat.cuisine);  // set the cuisine of category to edit
                         setEditOpen(true);    // open the edit modal
@@ -283,7 +283,7 @@ const Categories = () => {
                     <button
                       onClick={(e) => {  // stop propagation to prevent card click
                         e.stopPropagation();
-                        deleteCategory(cat.id);
+                        deleteCategory(docId(cat));
                       }}
                       className="w-full px-3 py-2 text-sm flex items-center gap-2 text-red-600 hover:bg-red-50"
                     >
@@ -293,10 +293,21 @@ const Categories = () => {
                 )}
               </div>
             ))}
-          </div >
-        )
-        }
-      </div >
+          </div>
+        )}
+        </div>
+        <PaginationBar
+          page={page}
+          totalPages={pagination.totalPages}
+          total={pagination.total}
+          limit={pagination.limit}
+          onPageChange={setPage}
+          loading={loading}
+        />
+      </div>
+      </div>
+    </AdminPageShell>
+    </div>
 
       {/* EDIT MODAL */}
       {
@@ -320,16 +331,14 @@ const Categories = () => {
                 className="border w-full px-2.5 py-1.5 rounded-md mb-2 text-sm"
               />
 
-              <select
+              <Select
+                aria-label="Cuisine"
                 value={editCuisine}
-                onChange={e => setEditCuisine(e.target.value)}
-                className="border w-full px-2.5 py-1.5 rounded-md mb-3 text-sm"
-              >
-                <option value="" disabled>Select Cuisine</option>
-                {CUISINES.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+                onChange={setEditCuisine}
+                options={CUISINE_OPTIONS}
+                placeholder="Select cuisine"
+                className="mb-3 w-full"
+              />
 
               <button
                 onClick={updateCategory}
@@ -367,7 +376,7 @@ const Categories = () => {
                   </p>
                 ) : (
                   viewProducts.map(p => (
-                    <div key={p.id} className="flex items-center justify-between px-4 py-3">
+                    <div key={docId(p)} className="flex items-center justify-between px-4 py-3">
                       <div>
                         <p className="text-sm font-medium">{p.name}</p>
                         <p className="text-xs text-gray-500">₹{p.price}</p>
@@ -388,7 +397,7 @@ const Categories = () => {
           </div>
         )
       }
-    </div >
+    </>
   );
 };
 

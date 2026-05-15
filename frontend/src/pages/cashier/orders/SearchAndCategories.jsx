@@ -1,51 +1,62 @@
 import { Search } from "lucide-react";
 
-// Search and Category filter component
 const SearchAndCategories = ({
-  search,            // Current search text
-  onSearchChange,    // Search input change handler
-  categoryOptions,   // List of categories (including "All")
-  activeCat,         // Currently selected category
-  onSelectCategory,  // Category selection handler
+  search = "",
+  onSearchChange,
+  categoryOptions = [],
+  activeCat,
+  onSelectCategory,
+  variant = "light",
 }) => {
+  const dark = variant === "dark";
   return (
-    // Wrapper: column on mobile, row on desktop
-    <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-center">
-
-      {/* Search input section */}
-      <div className="relative flex-1">
-
-        {/* Search icon inside input */}
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-        {/* Search text input */}
+    <div className="flex flex-col gap-2 md:gap-2.5">
+      <div className="relative">
+        <Search
+          className={`pointer-events-none absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 md:h-4 md:w-4 ${dark ? "left-3.5 text-slate-500 md:left-4" : "left-3 text-indigo-400/90 md:left-3.5"}`}
+        />
         <input
           type="text"
-          value={search}               // Controlled input value
-          onChange={onSearchChange}    // Update search state
-          placeholder="Search menu items..."
-          className="w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100"
+          value={search}
+          onChange={onSearchChange}
+          placeholder="Search…"
+          className={`w-full rounded-full border py-2.5 pr-3 text-xs shadow-sm transition focus:outline-none focus:ring-2 md:py-3 md:pr-4 md:text-sm ${
+            dark
+              ? "border-slate-600 bg-slate-800 pl-9 text-white placeholder:text-slate-500 focus:border-indigo-400 focus:ring-indigo-500/30 md:pl-11"
+              : "border-indigo-100/80 bg-white/90 pl-9 text-slate-900 placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-indigo-500/20 md:pl-11"
+          }`}
+          aria-label="Search menu items"
         />
       </div>
 
-      {/* Category buttons */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
-
-        {/* Loop through categories */}
-        {categoryOptions.map((cat) => (
-          <button
-            key={cat._id}                     // Unique key
-            onClick={() => onSelectCategory(cat._id)} // Set active category
-            className={`whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium transition ${
-              activeCat === cat._id
-                ? "border-orange-500 bg-orange-500 text-white" // Active category style
-                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300" // Inactive category style
-            }`}
-          >
-            {/* Category name */}
-            {cat.name}
-          </button>
-        ))}
+      <div className="-mx-0.5 flex gap-1.5 overflow-x-auto pb-0.5 pt-0.5 scrollbar-none md:gap-2 md:pb-0">
+        {categoryOptions.length === 0 ? (
+          <span className={`py-1 text-[10px] ${dark ? "text-slate-500" : "text-slate-400"}`}>—</span>
+        ) : (
+          categoryOptions.map((cat, i) => {
+            const catId = cat?._id ?? cat?.id ?? `cat-${i}`;
+            const name = cat?.name ?? "All";
+            const isActive = activeCat === catId;
+            return (
+              <button
+                key={catId}
+                type="button"
+                onClick={() => onSelectCategory(catId)}
+                className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-semibold shadow-sm transition md:px-4 md:py-1.5 md:text-xs ${
+                  dark
+                    ? isActive
+                      ? "bg-indigo-500 text-white shadow-indigo-500/25"
+                      : "border border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700/50"
+                    : isActive
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/25"
+                      : "border border-indigo-100/90 bg-white/90 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/50"
+                }`}
+              >
+                {name}
+              </button>
+            );
+          })
+        )}
       </div>
     </div>
   );

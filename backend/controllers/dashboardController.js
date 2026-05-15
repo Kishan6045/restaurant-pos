@@ -28,6 +28,7 @@ const dashboardOverview = async (req, res) => {
         //preset Supported
         const presetDaysMap = {
             "7d": 7,
+            "30d": 30,
             "30": 30,
         };
 
@@ -329,7 +330,7 @@ const dashboardOverview = async (req, res) => {
             preset: preset || null,
             totalSales,
             totalOrders,
-            OrdersSummary: {
+            ordersSummary: {
                 paid: paidOrders,
                 unpaid: unpaidOrders,
             },
@@ -343,7 +344,7 @@ const dashboardOverview = async (req, res) => {
             tables,
             staffOnDuty,
             menuSummary: {
-                Product: { total: totalProducts, active: activeProducts },
+                products: { total: totalProducts, active: activeProducts },
                 categories: { total: totalCategories, active: activeCategories },
             },
             paymentSummary,

@@ -1,6 +1,8 @@
 const Order = require("../models/Order-Model");
+const OrderCounter = require("../models/OrderCounter-Model");
 const Table = require("../models/Table-Model");
 const Product = require("../models/Products-Model");
+const { businessDayKey } = require("../utils/businessDay");
 
 
 
@@ -76,13 +78,22 @@ exports.createOrder = async (req, res) => {
 
     // create new order if not exists
     if (!order) {
+      const businessDay = businessDayKey();
+      const counter = await OrderCounter.findByIdAndUpdate(
+        businessDay,
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+      );
+      const displayOrderNumber = counter.seq;
+
       order = await Order.create({
         tableId,
+        businessDay,
+        displayOrderNumber,
         items: orderItems,
         totalAmount,
         orderStatus: "open",
         paymentStatus: "unpaid",
-        createdBy: req.user?.id || null
       });
 
       table.status = "occupied";
@@ -156,12 +167,14 @@ exports.updateOrderStatus = async (req, res) => {
 exports.getOrders = async (req, res) => {
   try {
     let filter = {};
-    // filter based on role
+
+    const { tableId } = req.query;
+    if (tableId) {
+      filter.tableId = tableId;
+    }
 
     if (req.user.role === "kitchen") {
-      filter = {
-        "items.status": { $in: ["pending", "preparing"] }
-      };
+      filter["items.status"] = { $in: ["pending", "preparing"] };
     }
 
     const orders = await Order.find(filter)

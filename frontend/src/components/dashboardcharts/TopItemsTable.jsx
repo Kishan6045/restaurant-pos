@@ -7,7 +7,7 @@ const TopItemsTable = ({ items }) => {
           {items?.length || 0} items
         </span>
       </div>
- 
+
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
@@ -20,14 +20,14 @@ const TopItemsTable = ({ items }) => {
           <tbody>
             {(items || []).map((item, idx) => (
               <tr
-                key={item._id}
+                key={item.id}
                 className="border-b last:border-b-0 hover:bg-gray-50 transition-colors"
               >
                 <td className="py-3 px-3 text-gray-500 tabular-nums">
                   {idx + 1}
                 </td>
                 <td className="py-3 px-3 font-medium text-gray-900">
-                  {item._id}
+                  {item.id}
                 </td>
                 <td className="py-3 px-3 text-right font-semibold tabular-nums">
                   {item.quantity}
@@ -40,5 +40,5 @@ const TopItemsTable = ({ items }) => {
     </div>
   );
 };
- 
+
 export default TopItemsTable;

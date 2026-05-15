@@ -2,10 +2,20 @@ const Payment = require("../models/Payment-Model");
 const Order = require("../models/Order-Model");
 const Table = require("../models/Table-Model");
 
+const PAYMENT_METHODS = ["cash", "upi", "card"];
+
 exports.createPayment = async (req, res) => {
     try {
         //Order check
         const { orderId, method } = req.body;
+
+        if (!method || !PAYMENT_METHODS.includes(method)) {
+            return res.status(400).json({ message: "Valid payment method required (cash, upi, card)" });
+        }
+
+        if (!orderId) {
+            return res.status(400).json({ message: "Order id required" });
+        }
 
         const order = await Order.findById(orderId);
         if (!order)
@@ -13,7 +23,27 @@ exports.createPayment = async (req, res) => {
         if (order.paymentStatus === "paid")
             return res.status(400).json({ message: "Order already paid" });
 
-        //Create payment
+        if (order.orderStatus !== "open") {
+            return res.status(400).json({
+                message: "Only open orders can be paid. This bill is already closed or completed.",
+            });
+        }
+
+        const lines = order.items || [];
+        if (lines.length === 0) {
+            return res.status(400).json({ message: "Order has no line items" });
+        }
+
+        const kitchenDone = new Set(["ready", "served"]);
+        const allKitchenDone = lines.every((item) => kitchenDone.has(item.status));
+
+        if (!allKitchenDone) {
+            return res.status(400).json({
+                message:
+                    "Payment is only allowed after kitchen marks every item as Ready. Please wait for the kitchen display or refresh billing.",
+            });
+        }
+
         const payment = await Payment.create({
             orderId,
             amount: order.totalAmount,
@@ -21,21 +51,13 @@ exports.createPayment = async (req, res) => {
             receivedBy: req.user.id
         });
 
-        //Close order
         order.paymentStatus = "paid";
-        order.paymentMethod = method;  // cash | upi | card
-        order.orderStatus = "billed";
-        // chek kitchen me us tables ki all items ready hai
-        const allItemsReady = order.items.every(
-            (item) => item.status === "ready"
-        );
+        order.paymentMethod = method;
+        order.orderStatus = "completed";
 
-        if (allItemsReady) {
-            order.orderStatus = "completed";
-            await Table.findByIdAndUpdate(order.tableId, {
-                status: "available"
-            });
-        }
+        await Table.findByIdAndUpdate(order.tableId, {
+            status: "available"
+        });
 
         await order.save();
 

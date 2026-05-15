@@ -2,13 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
-/* html, body {
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply font-sans text-slate-900 antialiased;
+  }
+}
+
+html,
+body,
+#root {
   height: 100%;
+  margin: 0;
   overflow: hidden;
-} */
-
-
-html, body {
-  height: 100%;
- overflow: hidden;
 }
