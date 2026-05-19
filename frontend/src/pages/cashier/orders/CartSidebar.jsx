@@ -1,6 +1,6 @@
 import { Trash2, Minus, Plus, CheckCircle, Receipt, ChefHat } from "lucide-react";
 import { docId } from "../../../helpers/docId";
-import { orderTicketLabel } from "../../../helpers/ordersResponse";
+import { kitchenOrderLabel } from "../../../helpers/ordersResponse";
 import { kitchenStatusLabel } from "../../../helpers/orderKitchen";
 import { POS, posLineImageSrc } from "../../../components/cashier/posListTheme";
 
@@ -35,7 +35,7 @@ const CartSidebar = ({
             <div className="flex items-center justify-between text-[10px] font-medium text-slate-600">
               <span className="inline-flex items-center gap-1">
                 <ChefHat className="h-3 w-3" />
-                Kitchen · {orderTicketLabel(existingOrder)}
+                Kitchen · {kitchenOrderLabel(existingOrder)}
               </span>
               <span className={kitchenReady ? "text-emerald-700" : "text-sky-800"}>
                 {kitchenStats.done}/{kitchenStats.total}

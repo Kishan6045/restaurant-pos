@@ -3,6 +3,7 @@ const OrderCounter = require("../models/OrderCounter-Model");
 const Table = require("../models/Table-Model");
 const Product = require("../models/Products-Model");
 const { businessDayKey } = require("../utils/businessDay");
+const { getNextTableOrderNumber } = require("../utils/tableOrderNumber");
 
 
 
@@ -11,6 +12,10 @@ const { businessDayKey } = require("../utils/businessDay");
 exports.createOrder = async (req, res) => {
   try {
     const { tableId, items } = req.body;
+
+    if (!tableId) {
+      return res.status(400).json({ message: "Table id required" });
+    }
 
     if (!items || items.length === 0) {
       return res.status(400).json({ message: "Items required" });
@@ -47,7 +52,8 @@ exports.createOrder = async (req, res) => {
         const existingItem = order.items.find(
           i =>
             i.productId.toString() === item.productId.toString() &&
-            i.status !== "ready"
+            i.status !== "ready" &&
+            i.status !== "served"
         );
 
         if (existingItem) {
@@ -85,11 +91,13 @@ exports.createOrder = async (req, res) => {
         { new: true, upsert: true }
       );
       const displayOrderNumber = counter.seq;
+      const tableOrderNumber = await getNextTableOrderNumber(tableId);
 
       order = await Order.create({
         tableId,
         businessDay,
         displayOrderNumber,
+        tableOrderNumber,
         items: orderItems,
         totalAmount,
         orderStatus: "open",

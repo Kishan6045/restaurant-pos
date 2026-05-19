@@ -2,7 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import ProfileDropdown from "../../components/ProfileDropdown";
 import api from "../../utils/axios";
-import { ordersListFromResponse, orderTicketLabel } from "../../helpers/ordersResponse";
+import {
+  ordersListFromResponse,
+  kitchenOrderLabel,
+  orderTableNumber,
+  tableOrderSequence,
+} from "../../helpers/ordersResponse";
 import { posLineImageSrc } from "../../components/cashier/posListTheme";
 
 const ACTIVE_ORDER_STATUSES = new Set(["open", "billed"]);
@@ -53,9 +58,12 @@ const KitchenScreen = () => {
         })
         .filter((order) => order.items.length > 0)
         .sort((a, b) => {
-          const na = Number(a.displayOrderNumber) || 0;
-          const nb = Number(b.displayOrderNumber) || 0;
-          if (na !== nb) return na - nb;
+          const ta = orderTableNumber(a) ?? 0;
+          const tb = orderTableNumber(b) ?? 0;
+          if (ta !== tb) return ta - tb;
+          const oa = tableOrderSequence(a) ?? 0;
+          const ob = tableOrderSequence(b) ?? 0;
+          if (oa !== ob) return oa - ob;
           const aT = new Date(a.createdAt || 0).getTime();
           const bT = new Date(b.createdAt || 0).getTime();
           return aT - bT;
@@ -194,24 +202,20 @@ const KitchenScreen = () => {
                       key={orderId}
                       className="flex w-full min-h-0 max-h-[calc(100dvh-7.75rem)] flex-col self-start overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm"
                     >
-                      <header className="flex shrink-0 items-center justify-between gap-1.5 border-b border-slate-200 bg-slate-50 px-1.5 py-1 sm:px-2">
-                        <div className="flex min-w-0 items-baseline gap-1.5">
-                          <span className="shrink-0 text-lg font-black tabular-nums leading-none text-slate-900 sm:text-xl">
-                            {orderTicketLabel(order)}
-                          </span>
-                          <span
-                            className="truncate text-[10px] font-medium text-slate-500"
-                            title={`Table T-${order.tableNumber}${order.businessDay ? ` · ${order.businessDay}` : ""} · ${order.items.length} items`}
-                          >
-                            T-{order.tableNumber}
-                            {order.businessDay ? ` · ${order.businessDay}` : ""} · {order.items.length} items
-                          </span>
+                      <header className="flex shrink-0 flex-col gap-0.5 border-b border-slate-200 bg-slate-50 px-1.5 py-1.5 sm:px-2">
+                        <div className="flex min-w-0 items-start justify-between gap-1.5">
+                          <p className="min-w-0 text-sm font-bold leading-tight text-slate-900 sm:text-base">
+                            {kitchenOrderLabel(order)}
+                          </p>
+                          {pendingCount > 0 ? (
+                            <span className="shrink-0 rounded-lg bg-indigo-600 px-1 py-0.5 text-[9px] font-bold text-white">
+                              +{pendingCount}
+                            </span>
+                          ) : null}
                         </div>
-                        {pendingCount > 0 ? (
-                          <span className="shrink-0 rounded-lg bg-indigo-600 px-1 py-0.5 text-[9px] font-bold text-white">
-                            +{pendingCount}
-                          </span>
-                        ) : null}
+                        <p className="text-[10px] font-medium text-slate-500">
+                          {order.items.length} item{order.items.length === 1 ? "" : "s"}
+                        </p>
                       </header>
 
                       <ul

@@ -4,15 +4,15 @@ import { toast } from "react-toastify";
 import { ChefHat, RefreshCw } from "lucide-react";
 import api from "../../../utils/axios";
 import Loader from "../../../components/Loader";
-import { ordersListFromResponse, orderTableId, orderTicketLabel } from "../../../helpers/ordersResponse";
+import { ordersListFromResponse, orderTableId, tableOrderLabel } from "../../../helpers/ordersResponse";
 import {
   allLineItemsKitchenReady,
   kitchenLineStats,
   kitchenStatusLabel,
 } from "../../../helpers/orderKitchen";
+import { computeBillTotals } from "../../../helpers/orderBillTotals";
 import { POS, posLineImageSrc } from "../../../components/cashier/posListTheme";
 
-const TAX_RATE = 0.05;
 const FINAL_ORDER_STATUSES = new Set(["completed", "closed"]);
 
 const statusRowClass = (status) => {
@@ -70,13 +70,10 @@ const BillingScreen = () => {
   }, [isViewMode, tableId, loadOrder]);
 
   const items = order?.items || [];
-  const subtotal = useMemo(
-    () => items.reduce((s, i) => s + Number(i.price || 0) * Number(i.quantity || 0), 0),
+  const { subtotal, tax, total: totalAmount } = useMemo(
+    () => computeBillTotals(items),
     [items]
   );
-  const tax = subtotal * TAX_RATE;
-  const computedTotal = subtotal + tax;
-  const totalAmount = typeof order?.totalAmount === "number" ? order.totalAmount : computedTotal;
   const itemCount = useMemo(() => items.reduce((s, i) => s + Number(i.quantity || 0), 0), [items]);
   const isPaid = order?.paymentStatus === "paid";
 
@@ -169,7 +166,7 @@ const BillingScreen = () => {
                 ? "Receipt"
                 : `Table ${order.tableId?.tableNumber != null ? order.tableId.tableNumber : tableId}`}
             </p>
-            <p className="mt-0.5 text-[11px] font-bold tabular-nums text-indigo-800">{orderTicketLabel(order)}</p>
+            <p className="mt-0.5 text-[11px] font-bold tabular-nums text-indigo-800">{tableOrderLabel(order)}</p>
           </div>
           <div className="flex items-center gap-1.5">
             {!isViewMode && !isPaid && (

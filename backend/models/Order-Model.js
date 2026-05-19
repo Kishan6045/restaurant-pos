@@ -19,6 +19,12 @@ const orderSchema = new mongoose.Schema({
         min: 1,
     },
 
+    /** Per-table running order number (1, 2, 3… resets only per table after each completed order) */
+    tableOrderNumber: {
+        type: Number,
+        min: 1,
+    },
+
     items: [
         {
             productId: {

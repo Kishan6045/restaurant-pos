@@ -1,5 +1,5 @@
 import { ChevronLeft, ChefHat } from "lucide-react";
-import { orderTicketLabel } from "../../../helpers/ordersResponse";
+import { tableOrderSequence, orderTicketLabel } from "../../../helpers/ordersResponse";
 
 const OrderHeader = ({
   tableMeta = {},
@@ -44,7 +44,7 @@ const OrderHeader = ({
               <div className="shrink-0 rounded-2xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50 to-white px-3 py-1.5 shadow-sm ring-1 ring-indigo-900/[0.06] md:px-3.5 md:py-2">
                 <span className="block text-[8px] font-semibold uppercase tracking-wide text-indigo-700">Order</span>
                 <span className="block text-center text-sm font-black tabular-nums leading-none text-indigo-950 md:text-base">
-                  {orderTicketLabel(existingOrder)}
+                  {tableOrderSequence(existingOrder) ?? orderTicketLabel(existingOrder)}
                 </span>
               </div>
             ) : null}

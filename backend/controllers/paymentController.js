@@ -1,6 +1,7 @@
 const Payment = require("../models/Payment-Model");
 const Order = require("../models/Order-Model");
 const Table = require("../models/Table-Model");
+const { computeOrderTotals } = require("../utils/orderTotals");
 
 const PAYMENT_METHODS = ["cash", "upi", "card"];
 
@@ -44,9 +45,11 @@ exports.createPayment = async (req, res) => {
             });
         }
 
+        const { total: amountDue } = computeOrderTotals(lines);
+
         const payment = await Payment.create({
             orderId,
-            amount: order.totalAmount,
+            amount: amountDue,
             method,
             receivedBy: req.user.id
         });
